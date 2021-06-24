@@ -1,7 +1,7 @@
 # Mercier-Luc-local-cookbook
 Local equilibrium to GS2 interface
 
-This script creates a local Miller equilibrium for Tokamaks and generates all the required data needed for a gyrokinetic calculation with GS2.
+This script creates a local Miller equilibrium for Tokamaks and generates all the relevant data needed for a gyrokinetic calculation with GS2 of that equilibrium.
 There is also provision to do a ballooning stability analysis and plot the $s-\alpha$ curve.
 
 
