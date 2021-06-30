@@ -26,7 +26,6 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.integrate import cumtrapz as ctrap
-from intersection_lib  import intersection as intsec 
 from scipy.signal import find_peaks
 from scipy.interpolate import InterpolatedUnivariateSpline as linspl
 from scipy.interpolate import CubicSpline as cubspl
