@@ -1,8 +1,9 @@
 """
-The purpose of this script is to generate a local Miller equilibrium and compare various parameters of interest with eiktest(old routine on GS2) for the same equilibrium. 
-In some ways, this script is the pythonized version of eiktest.
+The purpose of this script is to generate a local Miller equilibrium and compare various parameters of interest with 
+eiktest(old routine on GS2) for the same equilibrium. In some ways, this script is the pythonized version of eiktest.
 
-Additionally, it also performs a ballooning stability analysis based on Newcomb's theorem both in the collocation and the flux(straight-field-line) theta grid.
+Additionally, it also performs a ballooning stability analysis based on Newcomb's theorem both in the collocation and 
+the flux(straight-field-line) theta grid.
 
 The derivatives are calculated usign a central-difference method. The integrals are performed using a trapezoidal sum.
 
@@ -40,16 +41,16 @@ parnt_dir_nam = os.path.dirname(os.getcwd())
 
 # Further information can be found from Miller's paper. Refernce provided
 # in the repo
-ntheta = 1024
-#rhoc = 0.97
-#qinp = 8.3
-#shift = -0.66
-#s_hat_input = 8.3
-#R_geo = 1.47
-#Rmaj = 1.47
-#akappa = 2.2
-#akappri = 0.4
+ntheta = 512
 
+rhoc = 0.97
+qinp = 8.3
+shift = -0.66
+s_hat_input = 8.3
+R_geo = 1.47
+Rmaj = 1.47
+akappa = 2.2
+akappri = 0.4
 
 
 #rhoc = 0.98
@@ -574,13 +575,6 @@ gbdrift0 =  1/(B2_ex**2)*psi_diff[1]/diffrho[1]*F[1]/R_ex*(dqdr[1]*dB2l_ex/dl_ex
 
 ####################-------------------dBr calculation-----------------------------####################
 
-#It is impossible to get the right B_p on the adjacent surfaces using finite differencing. So dBdr using this method is going to way off.
-#dBdr = derm(B, 'r')/psi_diff*dpsi_dr + derm(B, 'l')/dt_st_l*dtdr_st
-
-#On the other hand, B_t on adjacent surfaces will be fairly accurate because we have the value of dFdpsi from Miller's formalism
-##dBtdr = derm(B_t, 'r')/psi_diff*dpsi_dr + derm(B_t, 'l')/dt_st_l*dtdr_st
-##dBdrt_bish =  B_t**2/(R*B)*(np.sin(u_ML) + dFdpsi/F*R*dpsi_dr)
-
 #We use Miller's equations to find dBdr using the information given on the middle surface. Miller and Bishop subscripts have been used interchangeably
 #dBdr_bish = (B_p**2/B*(1/R_c + dpdpsi*R/(B_p) + F*dFdpsi/dpsi_dr) + B_t**2/(R*B)*(np.sin(u_ML) - dFdpsi/F*R*dpsi_dr))
 dBdr_bish = B_p_ex/B_ex*(-B_p_ex/R_c_ex + dpdpsi*R_ex - F[1]**2*np.sin(u_ML_ex)/(R_ex**3*B_p_ex))
@@ -689,25 +683,13 @@ theta2 = theta_st_new_ex_uniq_sym[theta_st_new_ex_uniq_sym >= np.pi-eps]
 theta2 = theta2[theta2 <= 2*np.pi+eps]
 
 if np.linalg.norm((theta1 + theta2[::-1])/(2*np.pi)-1) > 0:
-    print("something is wrong with the theta symmetrization operation")
+    print("warning...something is wrong with the theta symmetrization operation")
 
-#B_ex_uniq = nperiod_data_extend(np.interp(theta_st_new_uniq_sym, theta_col_ex, B_ex), nperiod)
-#gradpar_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gradpar_eqarc_ex) 
-#cvdrift_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, cvdrift_eqarc) 
-#gbdrift_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gbdrift_eqarc) 
-#gbdrift0_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gbdrift0_eqarc) 
-#gds2_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds2_eqarc)
-#gds21_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds21_eqarc)
-#gds22_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds22_eqarc)
 
-#gradpar_uniq = np.interp(theta_st_new_ex_uniq, theta_col_ex, gradpar_eqarc_ex) 
-#cvdrift_uniq = np.interp(theta_st_new_ex_uniq, theta_col_ex, cvdrift_eqarc) 
-#gbdrift_uniq = np.interp(theta_st_new_ex_uniq, theta_col_ex, gbdrift_eqarc) 
-#gbdrift0_uniq = np.interp(theta_st_new_ex_uniq, theta_col_ex, gbdrift0_eqarc) 
-#B_ex_uniq =  np.interp(theta_st_new_ex_uniq, theta_col_ex, B_eqarc)
-#gds2_uniq =  np.interp(theta_st_new_ex_uniq, theta_col_ex, gds2_eqarc)
-#gds21_uniq =  np.interp(theta_st_new_ex_uniq, theta_col_ex, gds21_eqarc)
-#gds22_uniq =  np.interp(theta_st_new_ex_uniq, theta_col_ex, gds22_eqarc)
+####################################################################################
+###############----------LOCAL SHEAR PLOT----------------###########################
+####################################################################################
+
 
 #plt.plot(theta_eqarc, -B_p_ex*derm(aprime_bish/(R_ex*B_p_ex), 'l', 'o')[0]/dl[1], theta_eqarc, aprime_bish); plt.show()
 
@@ -715,14 +697,12 @@ if np.linalg.norm((theta1 + theta2[::-1])/(2*np.pi)-1) > 0:
 #plt.plot(theta_comn_mag_ax_new[1], B_p[1], theta_comn_mag_ax_new[1], B[1])
 #plt.show()
 
-
 #plt.plot(theta_comn_mag_ax_new[1], -B_p[1]*derm(aprime_bish/(R[1]*B_p[1]), 'l', par='o')[0]/dl[1]); plt.show()
 #plt.plot(theta_eqarc, -B_p_ex*derm(aprime_bish/(R_ex*B_p_ex), 'l', 'o')[0]/dl[1], theta_eqarc, aprime_bish); plt.show()
 #plt.plot(theta_comn_mag_ax_new[1], -B_p_ex*derm(aprime_bish/(R_ex*B_p_ex), 'l', 'o')[0]/dl[1], theta_comn_mag_ax_new[1], aprime_bish); plt.show()
 #print('integrated local shear = %.4f'%(-(aprime_bish*2/(R_ex*B_p_ex)*rho[1]/qinp*1/(2*np.pi))[-1]))
 
-
-
+# Check is the integrated local shear matches the global shear
 print((-(aprime_bish[-1]/(R[1][-1]*B_p[1][-1]))+(aprime_bish[0]/(R[1][0]*B_p[1][0])))*rho[1]/qinp*1/np.pi)
 
 #pdb.set_trace()
