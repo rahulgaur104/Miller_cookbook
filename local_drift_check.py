@@ -1,5 +1,5 @@
 """
-The purpose of this script is to generate a local Miller type equilibrium and compare various parameters of interest with eiktest(old routine on GS2) on the same equilibrium. 
+The purpose of this script is to generate a local Miller equilibrium and compare various parameters of interest with eiktest(old routine on GS2) for the same equilibrium. 
 In some ways, this script is the pythonized version of eiktest.
 
 Additionally, it also performs a ballooning stability analysis based on Newcomb's theorem both in the collocation and the flux(straight-field-line) theta grid.
@@ -21,7 +21,6 @@ These FOMs can be plotted w.r.t different types of thetas:
 
 Figures of merit to be added in the future
     bounce-averaged curvature drift(precession drift)
-
 """
 import os   
 import numpy as np
@@ -37,62 +36,58 @@ import time
 import multiprocessing as mp
 
 parnt_dir_nam = os.path.dirname(os.getcwd())
-# definitions
+# definitions of the following variables can be obtained from 
+# https://gyrokinetics.gitlab.io/gs2/page/namelists/#theta_grid_eik_knobs
 
-ntheta = 256
-#!rhoc = 0.93
+# Further information can be found from Miller's paper. Refernce provided
+# in the repo
+ntheta = 1024
 rhoc = 0.97
-#!qinp = 14.61
-#qinp = 5
 qinp = 8.3
-#shift = -0.40
-#!shift = -0.01
 shift = -0.66
-#shift = 0
-
-#!s_hat_input =4.24
 s_hat_input = 8.3
-
 R_geo = 1.47
 Rmaj = 1.47
-
-#!akappa = 1.603
 akappa = 2.2
-#!akappri = -0.279 			
 akappri = 0.4
+
+
+
+#rhoc = 0.98
+#qinp = 5
+#shift = -0.2
+#s_hat_input = 5
+#R_geo = 1.9
+#Rmaj = 1.5
+#akappa = 1.7
+#akappri = 1
+
 delrho = 0.005
 
 
 
+
 # Note that tri in gs2 is actually the sin(delta). I have used delta = 0.877 in eik.in
-#!tri = np.sin(0.877)
-tri = np.sin(0.43)
+tri = np.sin(0.5)
+#tri = np.sin(0.43)
 #!tripri = (np.sin(0.877+0.20*delrho) - np.sin(0.877-0.20*delrho))/(2*delrho)
-#!tripri = (np.sin(0.5+0.20*delrho) - np.sin(0.5-0.20*delrho))/(2*delrho)
-tripri = (np.sin(0.43+0.43*delrho) - np.sin(0.43-0.43*delrho))/(2*delrho)
+tripri = (np.sin(0.5+0.0*delrho) - np.sin(0.5-0.0*delrho))/(2*delrho)
+#tripri = (np.sin(0.43+0.43*delrho) - np.sin(0.43-0.43*delrho))/(2*delrho)
 
 
-#!beta_prime_input =  -0.020
-beta_prime_input =  -0.24
-#beta_prime_input =  -0.0
+#beta_prime_input =  -0.24
+beta_prime_input =  -1.0
 
 no_of_surfs = 3
 # note that this theta is neither geometric nor flux. It's just used to generate the surfaces.
 # Yet GS2 uses this theta for the grad par calculation
 theta = np.linspace(0, np.pi, ntheta)
 
-#Lref = R_geo/Rmaj
 
 # primary lowest level calculations
 R_0 = np.array([Rmaj+np.abs(shift)*delrho, Rmaj, Rmaj-np.abs(shift)*delrho])
 #drhodpsi = -1.38205 # always check with the value from eik6.out Probably related to B_r*a**2(a = rhoc/2), changes with shift. Why?
 
-
-
-#drhodpsi = -6.035 # always check with the value from eik6.out Probably related to B_r*a**2(a = rhoc/2)
-
-#psi = np.array([1-delrho/drhodpsi, 1, 1+delrho/drhodpsi])
-#pres = np.array([1+delrho, 1, 1-delrho])
 rho = np.array([rhoc - delrho, rhoc, rhoc + delrho])
 
 qfac = np.array([qinp-s_hat_input*(qinp/rhoc)*delrho, qinp, qinp+s_hat_input*(qinp/rhoc)*delrho]) 
@@ -100,12 +95,9 @@ kappa = np.array([akappa-akappri*delrho, akappa, akappa+akappri*delrho])
 delta = np.array([tri-tripri*delrho, tri, tri+tripri*delrho])
 
 #R_mag_ax can be anything as long as it's inside the annulus. 
-#R_mag_ax = R_0[int((no_of_surfs-1)/2)]
 R_mag_ax = Rmaj
 
-#mu = 4*np.pi/10 # 2*mu is only used in cvdrift. For Bishop relations, we always encounter mu
-#mu = 0.01873368080
-dpdrho = beta_prime_input/2 # mu*dpdrho assuming p is in MPa and B_r approx 1(the latter checked by comapring bmags). This definiton with a factor of 2 has been taken directly from geometry.f90.
+dpdrho = beta_prime_input/2  #This definiton with a factor of 2 has been taken directly from geometry.f90.
 
 
 R= np.array([R_0[i] + (rho[i])*np.cos(theta +np.arcsin(delta[i])*np.sin(theta)) for i in range(no_of_surfs)])
@@ -125,9 +117,9 @@ Z_old = Z
 
 # to check is the equilibrium sufaces intersect with each other
 if len(intsec(R[0], Z[0], R[1], Z[1])[0]) != 0 and  len(intsec(R[1], Z[1], R[2], Z[2])[0]) != 0:
-	print("error: curves intersect...")
+	print("error: surfaces intersect...")
 else:
-	print("curve intersection check passed... curves do not intersect")
+	print("curve intersection check passed... surfaces do not intersect")
 
 def derm(arr, ch, par='e'):
     # Finite difference subroutine
@@ -333,34 +325,28 @@ dt_dR = -dZ_drho/jac
 dt_dZ =  dR_drho/jac
 
 
-#dl_cmsm = np.concatenate((np.reshape(dl[:, 0], (-1,1)), dl[:, 1:-1]/2., np.reshape(dl[:,-1],(-1,1))), axis=1)
-#l = np.cumsum(dl, axis=1)/2 # factor of 2 because of central difference
 dpsidrho_arr = -R_geo/np.abs(2*np.pi*qfac/(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1])) # determining dpsidrho from the safety factor relation
 dpsidrho = dpsidrho_arr[1]
 #dpsidrho = -0.515198
 F = np.ones((3,))*R_geo
 drhodpsi = 1/dpsidrho
 
-# The difference bwetween cvdrift and gbdrift makes it clear that dpdpsi = 1.0. In the definition of cvdrift there is a factor of 2 in front of dpdrho because of a 2*mu
 dpdpsi = dpdrho*drhodpsi
 
 #pdb.set_trace()
 psi = np.array([1-delrho/drhodpsi, 1, 1+delrho/drhodpsi])
 psi_diff = derm(psi, 'r')
 
-
+# partial theta/partial rho (radial component of grad theta)
 dtdr_geo = np.sign(psi_diff)*(dt_dR*drhodR + dt_dZ*drhodZ)/np.sqrt(drhodR**2 + drhodZ**2)
-
 
 B_p = np.abs(dpsidrho)*np.array([np.sqrt(drhodR[i]**2 + drhodZ[i]**2)/R[i] for i in range(no_of_surfs)])
 B_t = np.array([np.reshape(F, (-1,1))[i]/R[i] for i in range(no_of_surfs)])
 B2 = np.array([B_p[i]**2 + B_t[i]**2 for i in range(no_of_surfs)])
 B = np.sqrt(B2)
 
-##grad_psi_ML  = psi_diff/dr
 # grad psi from the cartesian grid 
 grad_psi_cart = dpsidrho*np.sqrt(drhodR**2 + drhodZ**2)
-
 
 # gradpar_0 is b.grad(theta) where theta = collocation theta
 gradpar_0 = 1/(R*B)*np.array([np.abs(dpsidrho_arr[i])*np.sqrt(drhodR[i]**2 + drhodZ[i]**2) for i in range(no_of_surfs)])*(derm(theta, 'l', 'o')/dl) 
@@ -371,10 +357,10 @@ gradpar_0 = 1/(R*B)*np.array([np.abs(dpsidrho_arr[i])*np.sqrt(drhodR[i]**2 + drh
 
 ################------------------GRADIENTS ON FLUX THETA GRID------------------------##################
 
-# calculating theta_f or theta_st from the cartesian derivatives
+# Calculating theta_f or theta_st from the cartesian derivatives
 # Note that this theta_st is only meaningful for the central surface. This happens because we only know the exact
 # value of F on the central surface. We cannot get the values of F on the adjacent surfaces without using the 
-# Bishop recipe which comes later in this script.
+# Bishop recipe which comes later in this script. Please refer to the second reference in the repo README.md
 
 for i in range(no_of_surfs):
 	 theta_st[i, 1:] = ctrap(np.abs(np.reshape(F,(-1,1))[i]*(1/dpsidrho_arr[i])*jac[i]/R[i]), theta_comn_mag_ax[i])
@@ -387,7 +373,6 @@ spl1 = linspl(theta_st[1], theta)
 #spline object b/w geometric theta and flux theta
 th_geo_st_spl = linspl(theta_comn_mag_ax[1], theta_st[1], k = 1)
 
-#dtdr_st = dtdr_geo*th_geo_st_spl.derivative()(theta_comn_mag_ax[1])
 #Before we take gradients on the theta_st grid we need to interpolate R, Z and B on to a uniform theta_st grid
 theta_st_new = np.linspace(0, np.pi, ntheta)*np.reshape(np.ones((no_of_surfs,)),(-1,1))
 #theta_st_new = theta_st
@@ -402,6 +387,8 @@ for i in range(no_of_surfs):
         Z[i] = np.interp(theta_st_new[i], theta_st[i], Z[i])
         B[i] = np.interp(theta_st_new[i], theta_st[i], B[i])
         B_p[i] = np.interp(theta_st_new[i], theta_st[i], B_p[i])
+        gradpar_0[i] = np.interp(theta_st_new[i], theta_st[i], gradpar_0[i])
+        dtdr_geo[i] = np.interp(theta_st_new[i], theta_st[i], dtdr_geo[i])
         #dtdr_st[i] = np.interp(theta_st_new[i], theta_st[i], dtdr_st[i])
         theta_comn_mag_ax_new[i] = np.arctan2(Z[i], R[i]-R_mag_ax)
 
@@ -421,10 +408,11 @@ dpsidZ = -dR_dt/jac
 dt_dR = -dZ_dpsi/jac
 dt_dZ =  dR_dpsi/jac
 
+
+dtdr_st0 = (dt_dR*dpsidR + dt_dZ*dpsidZ)/np.sqrt(dpsidR**2 + dpsidZ**2)
+
 # Recalculate dl on the new grid
 dl = np.sqrt(derm(R,'l', 'e')**2 + derm(Z,'l', 'o')**2)
-#dl_cmsm = np.concatenate((np.reshape(dl[:, 0], (-1,1)), dl[:, 1:-1]/2., np.reshape(dl[:,-1],(-1,1))), axis=1)
-#l = np.cumsum(dl_cmsm, axis=1) # factor of 2 because of central difference
 
 dt = derm(theta_comn_mag_ax_new, 'l', 'o')
 for i in range(no_of_surfs):
@@ -458,13 +446,6 @@ dl_ex = nperiod_data_extend(dl[1], nperiod)
 
 
 diffrho = derm(rho, 'r')
-##a_s = (2*ctrap(1/(R[1]**2*B_p[1]), l[1], initial=0) + 2*F[1]**2*ctrap(1/(R[1]**4*B_p[1]**3), l[1], initial=0))  
-##b_s = (2*F[1]*ctrap(1/(R[1]**2*B_p[1]**3),l[1], initial=0 ))
-##c_s =  (2*F[1]*ctrap((-2o*np.sin(u_ML[1])/R[1] - 2/R_c[1])*(1/R[1]**3*B_p[1]**2), l[1], initial=0))
-
-###a_s = (-2*ctrap(jac[1]/R[1], theta_st_new[1], initial=0) + 2*F[1]**2*ctrap(jac[1]/(R[1]**3*B_p[1]**2), theta_st_new[1], initial=0))  
-###b_s = (2*F[1]*ctrap(jac[1]/(R[1]*B_p[1]**2), theta_st_new[1], initial=0 ))
-###c_s =  (2*F[1]*ctrap((2*np.sin(u_ML[1])/R[1] + 2/R_c[1])*jac[1]*1/(R[1]**2*B_p[1]), theta_st_new[1], initial=0))
 
 
 # Since we are calculating these coefficients in straight field line theta, we can use the fact that F[1]*jac[1]/R[1] = qfac[1]
@@ -474,25 +455,17 @@ b_s = -(2*qfac[1]*ctrap(1/(B_p_ex**2), theta_st_new_ex, initial=0))
 c_s =  (2*qfac[1]*ctrap((2*np.sin(u_ML_ex)/R_ex - 2/R_c_ex)*1/(R_ex*B_p_ex), theta_st_new_ex, initial=0))
 
 
-# calculating the exact dFdpsi on the surface from relation 21 in Miller's paper
+# calculating the exact dFdpsi on the surface from relation 21 in Miller's paper.
 dFdpsi = (-s_hat_input/(rho[1]*(psi_diff[1]/diffrho[1])*(1/(2*np.pi*qfac[1]*(2*nperiod-1))))-(b_s[-1]*dpdpsi - c_s[-1]))/a_s[-1]
-#dFdpsi = -0.103088
-#dFdpsi = (-s_hat_input/(rho[1]*(psi_diff[1]/diffrho[1])*(1/(2*np.pi*qfac[1]*(2*nperiod-1))))-(b_s[-1]*dpdpsi + 850.2))/a_s[-1]
-dFdpsi_4_ball = (-s_hat_input*2*np.pi*(2*nperiod-1)*qfac[1]/(rho[1]*1/drhodpsi) - b_s[-1]*dpdpsi + c_s[-1])/a_s[-1]
-#print("dFdpsi finite diff = %.5f,  Millr =  %.5f"%((F[2]-F[0])/psi_diff[1], dFdpsi))
+
 #pdb.set_trace()
 # psi_diff[1]/2 is essential
 F[0], F[1], F[2]= F[1]-dFdpsi*(psi_diff[1]/2), F[1], F[1]+dFdpsi*(psi_diff[1]/2)
-
 
 # Calculating the current from the relation (21) in Miller's paper(involving shat) and comparing it with F = q*R^2/J, where J = R*jac is the flux theta jacobian 
 
 F_chk = np.array([np.abs(np.mean(qfac[i]*R[i]/jac[i])) for i in range(no_of_surfs)])
 
-#if np.abs(F_chk[1] - R_geo) > 1E-11:
-#	 print("F_check failed... doesn't match to machine precision... error is %5E"%(F[1]-R_geo))
-#else:
-#	 print("F_check test passed") 
 
 
 if np.max(np.abs((dt_dR[1]*dpsidZ[1] - dt_dZ[1]*dpsidR[1])/np.sqrt(dpsidR[1]**2 + dpsidZ[1]**2) - dt_st_l[1]/dl[1])) > 1E-11:
@@ -505,18 +478,12 @@ if  np.abs(np.max((-dt_dR[1]*dpsidZ[1] + dpsidR[1]*dt_dZ[1])*jac[1]) - 1.0) > 1E
 	print("theta dot grad theta = 1 test failed...")
 else:
 	print("theta dot grad theta = 1 test passed...")
-#grad_psi_diff_chk = np.max(np.abs(grad_psi_ML[1]-grad_psi_cart[1]))
 
-#if  grad_psi_diff_chk > 1E-11:
-#	print("grad psi_ML and cart along rho test failed...\n difference is %.6E" %grad_psi_diff_chk)
-#else:
-#	print("grad psi_ML and cart test passed")
 
 dpsi_dr = np.zeros((no_of_surfs, ntheta))
 dpsi_dr = np.sign(psi_diff)*np.sqrt(dpsidR**2 + dpsidZ**2)
 B_p1 = np.array([np.sqrt(dpsidR[i]**2 + dpsidZ[i]**2)/R[i] for i in range(no_of_surfs)])
 B_p1_ex = nperiod_data_extend(B_p1[1], nperiod)
-
 
 B_p = np.abs(dpsi_dr)/R
 B_t = np.array([np.reshape(F, (-1,1))[i]/R[i] for i in range(no_of_surfs)])
@@ -530,7 +497,6 @@ B2_ex = nperiod_data_extend(B2[1], nperiod)
 #pdb.set_trace()
 
 #B2 = B_ex**2
-
 
 #diffP = derm(pres, 'r')
 dB2l = derm(B2, 'l')
@@ -553,7 +519,6 @@ grho = np.reshape(rho,(-1,1))*(diffrho)/(rhoc*psi_diff/dpsi_dr_ex)
 
 dFdpsi =  derm(F, 'r')/psi_diff
 
-
 #a_s = rho*psi_diff/diffrho*(1/(2*np.pi*qfac))*(2*np.pi*qfac/F + 2*F**2*ctrap(1/(R**4*B_p**3), l)[:,-1])  
 # rho*psi_diff/diffrho*(1/(2*np.pi*qfac)) prefactor before a_s, b_s and c_s
 #y = dt_dR*np.cos(phi_n) + dt_dZ*np.sin(phi_n) 
@@ -575,14 +540,16 @@ dt_st_l_ex = nperiod_data_extend(dt_st_l[1], nperiod, par='e')
 
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1],aprime[1])); plt.show()
 
-gradpar_ex = -1/(R_ex*B_ex)*(dpsi_dr_ex)*(dt_st_l_ex/dl_ex) # gradpar is b.grad(theta)
-gradpar_col_ex = -1/(R_ex*B_ex)*(dpsi_dr_ex)*(nperiod_data_extend(derm(theta_col, 'l', 'o')[0], nperiod)/dl_ex) # gradpar is b.grad(theta)
-#gradpar_ex = nperiod_data_extend(gradpar[1], nperiod)
+# gradpar = b.grad(theta) with theta = flux theta
+gradpar_ex = -1/(R_ex*B_ex)*(dpsi_dr_ex)*(dt_st_l_ex/dl_ex) 
+
+#gradpar with theta = colocation theta
+gradpar_col_ex = -1/(R_ex*B_ex)*(dpsi_dr_ex)*(nperiod_data_extend(derm(theta_col, 'l', 'o')[0], nperiod)/dl_ex) 
 
 
 
 aprime_bish = -R_ex*B_p_ex*(a_s*dFdpsi[1] +b_s*dpdpsi - c_s)/(2*np.abs(drhodpsi))
-pdb.set_trace()
+#pdb.set_trace()
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1],aprime_bish)); plt.show()
 #dtdr_st = diffrho/psi_diff*(aprime_bish - dqdr*theta_st_new)/np.reshape(qfac, (-1,1))
 
@@ -592,9 +559,10 @@ dtdr_st_ex = (aprime_bish*drhodpsi - dqdr*theta_st_new_ex)/np.reshape(qfac, (-1,
 
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1],dtdr_st[1]))
 
-gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_ex/dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
-#gds2_col =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_col_ex)**2 + (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_ex/dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
-
+gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + \
+        (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_ex/dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
+#gds2_col =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_col_ex)**2 + \
+#        (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_ex/dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
 
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gds2[1]))
 
@@ -602,12 +570,7 @@ gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + (np.resha
 gbdrift0 =  1/(B2_ex**2)*psi_diff[1]/diffrho[1]*F[1]/R_ex*(dqdr[1]*dB2l_ex/dl_ex)
 
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gbdrift0[1]))
-
-
 #theta_eq_arc = eqarc_creator(gradpar, theta_st_new_ex)
-
-
-
 
 
 ####################-------------------dBr calculation-----------------------------####################
@@ -625,28 +588,24 @@ dBdr_bish = B_p_ex/B_ex*(-B_p_ex/R_c_ex + dpdpsi*R_ex - F[1]**2*np.sin(u_ML_ex)/
 #dBdr_bish_2 = B_p_ex/B_ex*(B_p_ex/R_c_ex + dpdpsi*R_ex - F[1]**2*np.sin(u_ML_ex)/(R_ex**3*B_p_ex))
 dBdr = dBdr_bish
 
-#gbdrift =  1/(B2**2)*1.*np.divide(psi_diff,np.reshape(diffrho,(-1,1)))*(-1/R**2*dpsi_dr*2*B*dBdr +np.reshape(F, (-1,1))/R*(-theta_st*dqdr*dB2l/dl -1.*np.reshape(qfac, (-1,1))*dtdr_st*dB2l/dl + np.reshape(qfac, (-1,1))*dt_st_l/dl*(2*B*dBdr)))
-#jac = (1 - psi_diff/dpsi_dr*1/R_c)**(-1)
-jac =  1
+jac0 =  1
 
-gbdrift = 1/np.abs(drhodpsi*B_ex**3)*(2*B2_ex*dBdr/dpsi_dr_ex + 1/jac*aprime_bish*drhodpsi*F[1]/R_ex*dB2l_ex/dl_ex*1/B_ex)
+gbdrift = 1/np.abs(drhodpsi*B_ex**3)*(2*B2_ex*dBdr/dpsi_dr_ex + 1/jac0*aprime_bish*drhodpsi*F[1]/R_ex*dB2l_ex/dl_ex*1/B_ex)
 #gbdrift = dpsidrho*(-2/B_ex*dBdr_bish/dpsi_dr_ex + 2*aprime*F/R_ex*1/B_ex**3*dBl_ex/dl_ex)
 
 #cvdrift =  1/np.abs(drhodpsi*B**3)*(2*B2*(dpdr/(2*B) + dBdr)/dpsi_dr + 1/jac*aprime_bish*drhodpsi*F/R*dB2l/dl*1/B)
 cvdrift = 1/np.abs(drhodpsi*B_ex**3)*(2*B_ex*dpdpsi) + gbdrift 
 
-#cvdrift =  1/(B2**2)*1.*np.divide(psi_diff,np.reshape(diffrho,(-1,1)))*(-1/R**2*dpsi_dr*(2*dpdpsi*dpsi_dr + 2*B*dBdr) +np.reshape(F, (-1,1))/R*(theta_st*dqdr*dB2l/dl +1.*np.reshape(qfac, (-1,1))*dtdr_st*dB2l/dl + np.reshape(qfac, (-1,1))*dt_st_l/dl*(2*dpdpsi*dpsi_dr + 2*B*dBdr)))
-
 #plt.figure()
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gbdrift[1]))
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], cvdrift[1]))
-
 
 #plt.plot(theta_st_new[1], dtdr_st[1], theta_st_new[1], dtdr_geo[1]*th_geo_st_spl.derivative()(theta_comn_mag_ax_new[1]))
 #plt.show()
 
 
 #pdb.set_trace()
+#eqaual-arc theta calculation
 gradpar_lim = gradpar_ex[theta_st_new_ex <= np.pi]
 B_lim = B_ex[theta_st_new_ex <= np.pi]
 B_p_lim = B_p_ex[theta_st_new_ex <= np.pi]
@@ -661,6 +620,7 @@ theta_eqarc = ctrap(B_lim/B_p_lim*gradpar_eqarc, L_eqarc, initial=0)
 theta_eqarc_ex = nperiod_data_extend(theta_eqarc, nperiod, istheta=1)
 
 
+#pdb.set_trace()
 #gradpar_eqarc_ex = gradpar_eqarc*np.ones((len(theta_eqarc_ex),))
 #gds21_eqarc = np.interp(theta_eqarc_ex, theta_st_new_ex, gds21[1])
 #gds22_eqarc = np.interp(theta_eqarc_ex, theta_st_new_ex, gds22[1])
@@ -671,7 +631,9 @@ theta_eqarc_ex = nperiod_data_extend(theta_eqarc, nperiod, istheta=1)
 #gbdrift0_eqarc = np.interp(theta_eqarc_ex, theta_st_new_ex, gbdrift0)
 #cvdrift_eqarc = np.interp(theta_eqarc_ex, theta_st_new_ex, cvdrift)
 
-gradpar_eqarc_ex = gradpar_col_ex
+#gradpar_eqarc_ex = gradpar_col_ex
+gradpar_eqarc_ex = gradpar_ex
+R_eqarc = R_ex
 gds21_eqarc = gds21[1]
 gds22_eqarc = gds22[1]
 gds2_eqarc = gds2[1]
@@ -683,16 +645,16 @@ cvdrift_eqarc = cvdrift
 
 
 
-#theta_st_new_ex_uniq = find_optim_theta_arr(np.vstack((gradpar_eqarc_ex, cvdrift_eqarc, gbdrift_eqarc, gbdrift0_eqarc, B_eqarc, gds2_eqarc, gds21_eqarc, gds22_eqarc)), theta_st_new_ex, 5)
-#theta_st_new_ex_uniq = find_optim_theta_arr(np.vstack((gradpar_eqarc_ex, cvdrift_eqarc, gbdrift_eqarc, gbdrift0_eqarc, B_eqarc, gds2_eqarc, gds21_eqarc, gds22_eqarc)), theta_col_ex, 5)
-theta_st_new_ex_uniq = find_optim_theta_arr(np.vstack((gradpar_eqarc_ex, cvdrift, gbdrift, gbdrift0, B_ex, gds2, gds21, gds22)), theta_col_ex, 5)
-
+##theta_st_new_ex_uniq = find_optim_theta_arr(np.vstack((gradpar_eqarc_ex, cvdrift_eqarc, gbdrift_eqarc, gbdrift0_eqarc, B_eqarc, gds2_eqarc, gds21_eqarc, gds22_eqarc)), theta_st_new_ex, 5)
+##theta_st_new_ex_uniq = find_optim_theta_arr(np.vstack((gradpar_eqarc_ex, cvdrift_eqarc, gbdrift_eqarc, gbdrift0_eqarc, B_eqarc, gds2_eqarc, gds21_eqarc, gds22_eqarc)), theta_col_ex, 5)
+#theta_st_new_ex_uniq = find_optim_theta_arr(np.vstack((gradpar_eqarc_ex, cvdrift, gbdrift, gbdrift0, B_ex, gds2, gds21, gds22)), theta_col_ex, 5)
+theta_st_new_ex_uniq = theta_st_new_ex
 
 #plt.plot(theta_st_com_ex, B_ex, '-og', theta_st_com_ex_uniq, B_ex_uniq, '-or', ms=2.2); plt.show() 
 #plt.plot(theta_st_com_ex, gbdrift[2], '-og', theta_st_com_ex_uniq, gbdrift_uniq, '-or', ms=2.2); plt.show() 
 
-"""
 gradpar_uniq = np.interp(theta_st_new_ex_uniq, theta_st_new_ex, gradpar_eqarc_ex) 
+R_uniq = np.interp(theta_st_new_ex_uniq, theta_st_new_ex, R_ex)
 cvdrift_uniq = np.interp(theta_st_new_ex_uniq, theta_st_new_ex, cvdrift_eqarc) 
 gbdrift_uniq = np.interp(theta_st_new_ex_uniq, theta_st_new_ex, gbdrift_eqarc) 
 gbdrift0_uniq = np.interp(theta_st_new_ex_uniq, theta_st_new_ex, gbdrift0_eqarc) 
@@ -701,14 +663,14 @@ gds2_uniq =  np.interp(theta_st_new_ex_uniq, theta_st_new_ex, gds2_eqarc)
 gds21_uniq =  np.interp(theta_st_new_ex_uniq, theta_st_new_ex, gds21_eqarc)
 gds22_uniq =  np.interp(theta_st_new_ex_uniq, theta_st_new_ex, gds22_eqarc)
 
-print("no. of points reduced %.2f%%"%(100*(len(theta_st_new_ex)-len(theta_st_new_ex_uniq))/len(theta_st_new_ex)))
-print("||B_ex_uniq-B_ex|| = %.4f"%(np.linalg.norm(np.interp(theta_st_new_ex, theta_st_new_ex_uniq, B_ex_uniq)-B_ex)))
-print("||gbdrift_uniq-gbdrift|| = %.4f"%(np.linalg.norm(np.interp(theta_st_new_ex, theta_st_new_ex_uniq, gbdrift_uniq)-gbdrift)))
-print("||gds2_uniq-gds2|| = %.4f"%(np.linalg.norm(np.interp(theta_st_new_ex, theta_st_new_ex_uniq, gds2_uniq)-gds2)))
+#print("no. of points reduced %.2f%%"%(100*(len(theta_st_new_ex)-len(theta_st_new_ex_uniq))/len(theta_st_new_ex)))
+#print("||B_ex_uniq-B_ex|| = %.4f"%(np.linalg.norm(np.interp(theta_st_new_ex, theta_st_new_ex_uniq, B_ex_uniq)-B_ex)))
+#print("||gbdrift_uniq-gbdrift|| = %.4f"%(np.linalg.norm(np.interp(theta_st_new_ex, theta_st_new_ex_uniq, gbdrift_uniq)-gbdrift)))
+#print("||gds2_uniq-gds2|| = %.4f"%(np.linalg.norm(np.interp(theta_st_new_ex, theta_st_new_ex_uniq, gds2_uniq)-gds2)))
 
-"""
 
 eps = 0.8E-15
+#pdb.set_trace()
 theta1 = theta_st_new_ex_uniq[theta_st_new_ex_uniq >=0-eps]
 theta1 = theta1[theta1 <= np.pi+eps]
 
@@ -738,15 +700,14 @@ theta2 = theta2[theta2 <= 2*np.pi+eps]
 if np.linalg.norm((theta1 + theta2[::-1])/(2*np.pi)-1) > 0:
     print("something is wrong with the theta symmetrization operation")
 
-B_ex_uniq = nperiod_data_extend(np.interp(theta_st_new_uniq_sym, theta_col_ex, B_ex), nperiod)
-gradpar_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gradpar_eqarc_ex) 
-cvdrift_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, cvdrift_eqarc) 
-gbdrift_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gbdrift_eqarc) 
-gbdrift0_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gbdrift0_eqarc) 
-gds2_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds2_eqarc)
-gds21_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds21_eqarc)
-gds22_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds22_eqarc)
-    
+#B_ex_uniq = nperiod_data_extend(np.interp(theta_st_new_uniq_sym, theta_col_ex, B_ex), nperiod)
+#gradpar_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gradpar_eqarc_ex) 
+#cvdrift_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, cvdrift_eqarc) 
+#gbdrift_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gbdrift_eqarc) 
+#gbdrift0_uniq = np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gbdrift0_eqarc) 
+#gds2_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds2_eqarc)
+#gds21_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds21_eqarc)
+#gds22_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds22_eqarc)
 
 #gradpar_uniq = np.interp(theta_st_new_ex_uniq, theta_col_ex, gradpar_eqarc_ex) 
 #cvdrift_uniq = np.interp(theta_st_new_ex_uniq, theta_col_ex, cvdrift_eqarc) 
@@ -758,88 +719,25 @@ gds22_uniq =  np.interp(theta_st_new_ex_uniq_sym, theta_col_ex, gds22_eqarc)
 #gds22_uniq =  np.interp(theta_st_new_ex_uniq, theta_col_ex, gds22_eqarc)
 
 #plt.plot(theta_eqarc, -B_p_ex*derm(aprime_bish/(R_ex*B_p_ex), 'l', 'o')[0]/dl[1], theta_eqarc, aprime_bish); plt.show()
-#plt.plot(theta_eqarc, -B_p_ex*derm(aprime_bish/(R_ex*B_p_ex), 'l', 'o')[0]/dl[1], theta_eqarc, aprime_bish); plt.show()
 
 #plt.plot(theta_eqarc, -B_p[1]*derm(aprime_bish/(R[1]*B_p[1]), 'l', par='o')[0]/dl[1]); plt.show()
-#plt.plot(theta_comn_mag_ax_new[1], -B_p[1]*derm(aprime_bish/(R[1]*B_p[1]), 'l', par='o')[0]/dl[1]); plt.show()
 #plt.plot(theta_comn_mag_ax_new[1], B_p[1], theta_comn_mag_ax_new[1], B[1])
 #plt.show()
 
-print(aprime_bish*2/(R_ex*B_p_ex)*rho[1]/qinp*1/(2*np.pi))
+
+#plt.plot(theta_comn_mag_ax_new[1], -B_p[1]*derm(aprime_bish/(R[1]*B_p[1]), 'l', par='o')[0]/dl[1]); plt.show()
+#plt.plot(theta_eqarc, -B_p_ex*derm(aprime_bish/(R_ex*B_p_ex), 'l', 'o')[0]/dl[1], theta_eqarc, aprime_bish); plt.show()
+#plt.plot(theta_comn_mag_ax_new[1], -B_p_ex*derm(aprime_bish/(R_ex*B_p_ex), 'l', 'o')[0]/dl[1], theta_comn_mag_ax_new[1], aprime_bish); plt.show()
+#print('integrated local shear = %.4f'%(-(aprime_bish*2/(R_ex*B_p_ex)*rho[1]/qinp*1/(2*np.pi))[-1]))
 
 
 
-print(((aprime_bish[-1]/(R[1][-1]*B_p[1][-1]))-(aprime_bish[0]/(R[1][0]*B_p[1][0])))*rho[1]/qinp*1/np.pi)
+print((-(aprime_bish[-1]/(R[1][-1]*B_p[1][-1]))+(aprime_bish[0]/(R[1][0]*B_p[1][0])))*rho[1]/qinp*1/np.pi)
 
-pdb.set_trace()
+#pdb.set_trace()
 
 a_N = 1
 B_N = 1
-
-want_2_save = 0
-want_2_make_grid = 1
-if want_2_save == 1:
-    gradpar_ball = reflect_n_append(gradpar_uniq, 'e')
-    theta_ball = reflect_n_append(theta_st_new_ex_uniq_sym, 'o')
-    #theta_ball = reflect_n_append(theta_st_new_ex_uniq, 'o')
-    cvdrift_ball = reflect_n_append(cvdrift_uniq, 'e')
-    gbdrift_ball = reflect_n_append(gbdrift_uniq, 'e')
-    gbdrift0_ball = reflect_n_append(gbdrift0_uniq, 'o')
-    B_ball = reflect_n_append(B_ex_uniq, 'e')
-    B_ball = B_ball/B_N
-    gds2_ball = reflect_n_append(gds2_uniq, 'e')
-    gds21_ball = reflect_n_append(gds21_uniq, 'o')
-    gds22_ball = reflect_n_append(gds22_uniq , 'e')
-    ntheta = len(theta_ball)
-    data = np.zeros((ntheta+1, 10))
-    A1 = []
-    A2 = []
-    A3 = [] 
-    A4 = [] 
-    A5 = [] 
-    for i in range(ntheta+1):
-        if i == 0:
-            data[0, :5] = np.array([int((ntheta-1)/2), 0., s_hat_input, 1.0 , qfac[1]]) 
-        else:
-            data[i, :] = np.array([theta_ball[i-1], B_ball[i-1], gradpar_ball[i-1], gds2_ball[i-1], gds21_ball[i-1], gds22_ball[i-1], cvdrift_ball[i-1], gbdrift0_ball[i-1], gbdrift_ball[i-1],  gbdrift0_ball[i-1]]) # two gbdrift0's because cvdrift0=gbdrift0
-
-            A2.append('    %.9f    %.9f    %.9f    %.9f\n'%(gbdrift_ball[i-1], gradpar_ball[i-1], 1.0, theta_ball[i-1]))
-            A3.append('    %.9f    %.9f    %.12f    %.9f\n'%(cvdrift_ball[i-1], gds2_ball[i-1], B_ball[i-1], theta_ball[i-1]))
-            A4.append('    %.9f    %.9f    %.9f\n'%(gds21_ball[i-1], gds22_ball[i-1], theta_ball[i-1]))
-            A5.append('    %.9f    %.9f    %.9f\n'%(gbdrift0_ball[i-1], gbdrift0_ball[i-1], theta_ball[i-1]))
-            
-    #np.savetxt("%s/output_files_vmec/eikcoefs_output/D3D_postri_pres_scale_%d_eikcoefs_surf_%d_nperiod_%d.txt"%(parnt_dir_nam, pres_scale, surf_idx, nperiod), data, fmt ='%.17E')
-    A1.append([A2, A3, A4, A5])
-    A1 = A1[0]
-
-    nlambda = len(lambda_create(B_ball/B_N))
-    lambda_arr = lambda_create(B_ball/B_N)
-    char = "grid.out_Miller_beta_prime_%d_nperiod_%d_nl%d_nt%d"%(int(np.abs(1000*beta_prime_input)), nperiod, nlambda, len(theta_ball))
-
-    if want_2_make_grid == 1:
-        fname_in_txt_rescaled = '{0}/{1}/{2}/{3}_{4}'.format(parnt_dir_nam, 'low_beta_test','eikcoefs_output', char, 'eikcoefs')
-        g = open(fname_in_txt_rescaled, 'w')
-        headings = ['nlambda\n', 'lambda\n', 'ntgrid nperiod ntheta drhodpsi rmaj shat kxfac q\n', 'gbdrift gradpar grho tgrid\n', 'cvdrift gds2 bmag tgrid\n', 'gds21 gds22 tgrid\n', 'cvdrift0 gbdrift0 tgrid\n', 'Rplot Rprime tgrid\n', 'Zplot Zprime tgrid\n', 'aplot aprime tgrid\n']
-        g.write(headings[0])
-        g.write('%d\n'%(nlambda))
-        g.writelines(headings[1])
-        
-        for i in range(nlambda):
-            g.writelines('%.19f\n'%(lambda_arr[i]))
-        
-        g.writelines(headings[2])
-        g.writelines('  %d    %d    %d   %0.5f   %0.1f    %.9f   %.1f   %.2f\n'%((ntheta-1)/2, 1, (ntheta-1), np.abs(drhodpsi), 1.0, s_hat_input, 1.0, qfac[1]))
-        
-        for i in np.arange(3, len(headings)):
-            g.writelines(headings[i])
-            for j in range(ntheta):
-                if i <= 6:
-                    g.write(A1[i-3][j])
-                else:
-                    g.write(A1[-1][j])
-        #pdb.set_trace()
-        g.close()
-
 
 
 ######################------BALLOONING CALCULATION IN FLUX COORDINATES----------------##############
@@ -848,22 +746,32 @@ if want_2_save == 1:
 diff = 0.
 one_m_diff = 1. - diff
 
-gradpar_ex = gradpar_ex[theta_st_new_ex <= np.pi]
+#gradpar_ex = gradpar_ex[theta_st_new_ex <= np.pi]
 #gradpar_ex = gradpar_ex[theta_st_new_ex >=0]
 gradpar_ball = reflect_n_append(gradpar_ex, 'e')
 
-theta_ball = reflect_n_append(theta_st_new[1], 'o')
-cvdrift = cvdrift[theta_st_new_ex <= np.pi]
+theta_ball = reflect_n_append(theta_st_new_ex_uniq, 'o')
+#cvdrift = cvdrift[theta_st_new_ex <= np.pi]
 #cvdrift = cvdrift[theta_st_new_ex >= 0]
-cvdrift_ball = reflect_n_append(cvdrift, 'e')
-R_ball = reflect_n_append(R[1], 'e')
-B_ball = reflect_n_append(B[1], 'e')
-gds2_1 = gds2[1][theta_st_new_ex <=np.pi]
+cvdrift_ball = reflect_n_append(cvdrift_uniq, 'e')
+R_ball = reflect_n_append(R_uniq, 'e')
+B_ball = reflect_n_append(B_ex_uniq, 'e')
+#gds2_1 = gds2[1][theta_st_new_ex <=np.pi]
+gds2_ball = reflect_n_append(gds2_uniq, 'e')
 #gds2 = gds2[theta_st_new_ex >=0]
-gds2_ball = reflect_n_append(gds2_1, 'e')
+#gds2_ball = reflect_n_append(gds2_1, 'e')
 
-delthet = np.diff(theta_ball)
-ntheta = len(theta_ball)
+theta_ball2 = np.linspace(-(2*nperiod-1)*np.pi, (2*nperiod-1)*np.pi, 1001)
+gradpar_ball = np.interp(theta_ball2, theta_ball, gradpar_ball)
+cvdrift_ball = np.interp(theta_ball2, theta_ball, cvdrift_ball)
+R_ball = np.interp(theta_ball2, theta_ball, R_ball)
+B_ball = np.interp(theta_ball2, theta_ball, B_ball)
+gds2_ball = np.interp(theta_ball2, theta_ball, gds2_ball)
+
+
+
+delthet = np.diff(theta_ball2)
+ntheta = len(theta_ball2)
 
 #average of dbetadrho
 #dbetadrho = -np.sum((cvdrift-gbdrift)*bmag**2)/ntheta 
@@ -871,9 +779,10 @@ ntheta = len(theta_ball)
 #dbetadrho = beta_prime_input
 
 
-g = gds2_ball/((R_ball*B_ball)**2)
-c = -1*dpdrho*cvdrift_ball*R_ball**2*qfac[1]**2/(F[1]**2)
-
+#g = gds2_ball/((R_ball*B_ball)**2)
+#c = dpdrho*cvdrift_ball*R_ball**2*qfac[1]**2/(F[1]**2)
+g = gds2_ball*gradpar_ball/B_ball
+c = 1*dpdrho*cvdrift_ball/(B_ball*gradpar_ball)
 
 
 ch = np.zeros((ntheta,))
@@ -906,8 +815,10 @@ for ig in np.arange(1, ntheta):
 
 psi = np.zeros((ntheta,))
 psi[0] = 0.
-psi[1]=delthet[0]
-psi_prime=psi[1]/g2[1]
+#psi[1]=delthet[0]+0.0001
+psi[1]=delthet[0]+0.1
+#psi_prime=psi[1]/g2[1]
+psi_prime = 0.01
 
 for ig in np.arange(1,ntheta-1):
     psi_prime=psi_prime+c1[ig]*psi[ig]+c2[ig]*psi[ig-1]
@@ -918,202 +829,129 @@ for ig in np.arange(1,ntheta-1):
            print("instability detected... please choose a different equilibrium")
 
 
-
+plt.plot(theta_ball2, psi); plt.show()
 
 
 ######################-------------BALLOONING CALCULATION---------------------##############
 
-#converting arrays to the original theta grid(the non-physical one) used in gradpar
-
-'''
-cvdrift_theta_grid = np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], cvdrift[1])
-B_theta_grid = np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], B[1])
-gds2_theta_grid = np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gds2[1])
-
-
-def reflect_n_append(arr, ch):
-	"""
-	The purpose of this function is to increase the span of an array from [0, np.pi] to [-np.pi,np.pi). ch can either be 'e' or 'o' depending upon the parity of the input array.
-	"""
-	rows = 1
-	brr = np.zeros((2*len(arr)-1, ))
-	if ch == 'e':
-		for i in range(rows):
-			brr = np.concatenate((arr[::-1][:-1], arr))
-	else :
-		for i in range(rows):
-			brr = np.concatenate((-arr[::-1][:-1], arr))
-	return brr
-		
-
-diff = 0.
-one_m_diff = 1. - diff
-
-gradpar_ball = reflect_n_append(gradpar[1], 'e')
-
-theta_ball = reflect_n_append(theta, 'o')
-cvdrift_ball = reflect_n_append(cvdrift_theta_grid, 'e')
-B_ball = reflect_n_append(B_theta_grid, 'e')
-gds2_ball = reflect_n_append(gds2_theta_grid, 'e')
-ntheta = 2*ntheta-1
-
-delthet = np.diff(theta_ball)
-
-#average of dbetadrho
-#dbetadrho = -np.sum((cvdrift-gbdrift)*bmag**2)/ntheta 
-
-#dbetadrho = beta_prime_input
-
-
-g = gds2_ball*gradpar_ball/B_ball
-c = -dpdrho*cvdrift_ball/(B_ball*gradpar_ball)
-
-ch = np.zeros((ntheta,))
-gh = np.zeros((ntheta,))
-
-for i in np.arange(1, ntheta):
-    ch[i] = 0.5*(c[i] + c[i-1]) 
-    gh[i] = 0.5*(g[i] + g[i-1])
-
-cflmax = np.max(np.abs(delthet**2*ch[1:]/gh[1:]))
-
-
-c1 = np.zeros((ntheta,))
-for ig in np.arange(1, ntheta-1):
-    c1[ig] = -delthet[ig]*(one_m_diff*c[ig]+0.5*diff*ch[ig+1])\
-             -delthet[ig-1]*(one_m_diff*c[ig]+0.5*diff*ch[ig])\
-             -delthet[ig-1]*0.5*diff*ch[ig]
-    c1[ig]=0.5*c1[ig]
-
-
-c2 = np.zeros((ntheta,))
-g1 = np.zeros((ntheta,))
-g2 = np.zeros((ntheta,))
-
-for ig in np.arange(1, ntheta):
-    c2[ig] = -0.25*diff*ch[ig]*delthet[ig-1]
-    g1[ig] = gh[ig]/delthet[ig-1]
-    g2[ig] = 1.0/(0.25*diff*ch[ig]*delthet[ig-1]+gh[ig]/delthet[ig-1])
-
-
-psi = np.zeros((ntheta,))
-psi[0] = 0.
-psi[1]=delthet[0]
-psi_prime=psi[1]/g2[1]
-
-for ig in np.arange(1,ntheta-1):
-    psi_prime=psi_prime+c1[ig]*psi[ig]+c2[ig]*psi[ig-1]
-    psi[ig+1]=(g1[ig+1]*psi[ig]+psi_prime)*g2[ig+1]
-
-for ig in np.arange(1,ntheta-1):
-    if(psi[ig]*psi[ig+1] <= 0 ):
-           print("instability detected... please choose a different equilibrium")
-
-
-'''
-
-
-
 def check_ball(shat_n, dpdpsi_n):
-	dpsidrho = 1/drhodpsi
-	#dFdpsi_n = (-shat_n*2*np.pi*qfac[1]/(rho[1]*dpsidrho) - b_s[-1]*dpdpsi + c_s[-1])/a_s[-1]
-	dFdpsi_n = (shat_n/(rho[1]*dpsidrho*(1/(2*np.pi*qfac[1])))-(b_s[-1]*dpdpsi_n - c_s[-1]))/a_s[-1]
-	dqdpsi_n = shat_n*qfac[1]/rho[1]*1/dpsidrho
-	dqdr_n = dqdpsi_n*dpsi_dr
 
-	aprime_n = -R[1]*B_p[1]*(a_s*dFdpsi_n +b_s*dpdpsi_n - c_s)*0.5/np.abs(drhodpsi)
-	dtdr_st_n = (aprime_n*drhodpsi - dqdr_n*theta_st_new[1])/qfac[1]
-	#dtdr_st_n = (aprime_n - dqdr_n*theta_st_com)/q_vmec_half[rel_surf_idx]
-	gds2_n =  (dpsidrho)**2*(1/R**2 + (dqdr_n*theta_st_new)**2 + (np.reshape(qfac,(-1,1)))**2*(dtdr_st_n**2 + (dt_st_l/dl)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr_n*theta_st_new*dtdr_st_n)
-	#pdb.set_trace()
-	dBdr_bish_n = B_p/B*(-B_p/R_c + dpdpsi_n*R + F**2*np.sin(u_ML)/(R**3*B_p))
-	gbdrift_n = 1/np.abs(drhodpsi*B**3)*(2*B2*dBdr_bish_n/dpsi_dr + aprime_n*drhodpsi*F/R*dB2l/dl*1/B)
-	dPdr_n = dpdpsi_n*dpsi_dr
-	#cvdrift_n =  dpsidrho/np.abs(B)*(-2*(2*dPdr_n/(2*B))/dpsi_dr) + gbdrift
-	cvdrift_n =  1/np.abs(drhodpsi*B**3)*(2*B2*(2*dPdr_n/(2*B))/dpsi_dr) + gbdrift_n
+        dpsidrho = 1/drhodpsi
+        #dFdpsi_n = (-shat_n*2*np.pi*qfac[1]/(rho[1]*dpsidrho) - b_s[-1]*dpdpsi + c_s[-1])/a_s[-1]
+        dFdpsi_n = (-shat_n/(rho[1]*(psi_diff[1]/diffrho[1])*(1/(2*np.pi*qfac[1]*(2*nperiod-1))))-(b_s[-1]*dpdpsi - c_s[-1]))/a_s[-1]
+        #dFdpsi_n = -(shat_n/(rho[1]*dpsidrho*(1/(2*np.pi*qfac[1])))-(b_s[-1]*dpdpsi_n - c_s[-1]))/a_s[-1]
+        dqdpsi_n = shat_n*qfac[1]/rho[1]*1/dpsidrho
+        dqdr_n = dqdpsi_n*dpsi_dr
+        
+        aprime_n = -R_ex*B_p_ex*(a_s*dFdpsi_n +b_s*dpdpsi_n - c_s)*0.5/np.abs(drhodpsi)
+        dtdr_st_n = (aprime_n*drhodpsi - dqdr_n*theta_st_new_ex)/qfac[1]
+        #dtdr_st_n = (aprime_n - dqdr_n*theta_st_com)/q_vmec_half[rel_surf_idx]
+        gds2_n =  (dpsidrho)**2*(1/R**2 + (dqdr_n*theta_st_new_ex)**2 + (np.reshape(qfac,(-1,1)))**2*(dtdr_st_n**2 + (dt_st_l/dl)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr_n*theta_st_new_ex*dtdr_st_n)
+        # BAD PRACTICE F[1]
+        dBdr_bish_n = B_p_ex/B_ex*(-B_p_ex/R_c_ex + dpdpsi_n*R_ex - F[1]**2*np.sin(u_ML_ex)/(R_ex**3*B_p_ex))
+        gbdrift_n = 1/np.abs(drhodpsi*B**3)*(2*B2*dBdr_bish_n/dpsi_dr + aprime_n*drhodpsi*F[1]/R*dB2l/dl*1/B)
+        dPdr_n = dpdpsi_n*dpsi_dr
+        #cvdrift_n =  dpsidrho/np.abs(B)*(-2*(2*dPdr_n/(2*B))/dpsi_dr) + gbdrift
+        cvdrift_n =  1/np.abs(drhodpsi*B**3)*(2*B2*(2*dPdr_n/(2*B))/dpsi_dr) + gbdrift_n
+        #pdb.set_trace()
+        #plt.plot(theta_st_new_ex, cvdrift_n[1], theta_st_new[0], cvdrift)
+        
+        
+        diff = 0.
+        one_m_diff = 1. - diff
+        
+        
+        theta_ball = reflect_n_append(theta_st_new[1], 'o')
+        #theta_ball = reflect_n_append(theta_eqarc, 'o')
+        #theta_ball = reflect_n_append(theta_col_ex, 'o')
+        cvdrift_ball = reflect_n_append(cvdrift_n[1], 'e')
+        #gradpar_ball = reflect_n_append(gradpar_eqarc_ex, 'e')
+        #gradpar_ball = reflect_n_append(gradpar_0[1], 'e')
+        gradpar_ball = reflect_n_append(gradpar_ex, 'e')
+        R_ball = reflect_n_append(R_ex, 'e')
+        B_ball = reflect_n_append(B_ex, 'e')
+        gds2_ball = reflect_n_append(gds2_n[1], 'e')
+        #ntheta = len(theta_ball)
+        
+        #delthet = np.diff(theta_ball)
+        theta_ball2 = np.linspace(-(2*nperiod-1)*np.pi, (2*nperiod-1)*np.pi, 901)
+        gradpar_ball = np.interp(theta_ball2, theta_ball, gradpar_ball)
+        cvdrift_ball = np.interp(theta_ball2, theta_ball, cvdrift_ball)
+        R_ball = np.interp(theta_ball2, theta_ball, R_ball)
+        B_ball = np.interp(theta_ball2, theta_ball, B_ball)
+        gds2_ball = np.interp(theta_ball2, theta_ball, gds2_ball)
+        
+        delthet = np.diff(theta_ball2)
+        ntheta = len(theta_ball2)
+        #average of dbetadrho
+        #dbetadrho = -np.sum((cvdrift-gbdrift)*bmag**2)/ntheta 
+        
+        #g = gds2_ball/((R_ball*B_ball)**2)
+        #c = -dpdpsi_n*dpsidrho*cvdrift_ball*qfac[1]**2/(F[1]/R_ball)**2
+        #c = -dpdpsi_n*cvdrift_ball*qfac[1]**2/(F[1]/R_ball)**2
+        
+        g = gds2_ball*gradpar_ball/B_ball
+        c = dpdrho*cvdrift_ball/(B_ball*gradpar_ball)
 
-	
-	diff = 0.
-	one_m_diff = 1. - diff
-
-
-	theta_ball = reflect_n_append(theta_st_new[1], 'o')
-	cvdrift_ball = reflect_n_append(cvdrift_n[1], 'e')
-	R_ball = reflect_n_append(R[1], 'e')
-	B_ball = reflect_n_append(B[1], 'e')
-	gds2_ball = reflect_n_append(gds2_n[1], 'e')
-	ntheta = len(theta_ball)
-	
-	delthet = np.diff(theta_ball)
-	
-	#average of dbetadrho
-	#dbetadrho = -np.sum((cvdrift-gbdrift)*bmag**2)/ntheta 
-	
-	#dbetadrho = beta_prime_input
-	#pdb.set_trace()
-	
-	
-	g = gds2_ball/((R_ball*B_ball)**2)
-	c = -dpdpsi_n*dpsidrho*cvdrift_ball*qfac[1]**2/(F[1]/R_ball)**2
-	#c = -dpdpsi_n*cvdrift_ball*qfac[1]**2/(F[1]/R_ball)**2
-	
-	ch = np.zeros((ntheta,))
-	gh = np.zeros((ntheta,))
-	
-	for i in np.arange(1, ntheta):
-	    ch[i] = 0.5*(c[i] + c[i-1]) 
-	    gh[i] = 0.5*(g[i] + g[i-1])
-	
-	cflmax = np.max(np.abs(delthet**2*ch[1:]/gh[1:]))
-	
-	
-	c1 = np.zeros((ntheta,))
-	for ig in np.arange(1, ntheta-1):
-	    c1[ig] = -delthet[ig]*(one_m_diff*c[ig]+0.5*diff*ch[ig+1])\
-	             -delthet[ig-1]*(one_m_diff*c[ig]+0.5*diff*ch[ig])\
-	             -delthet[ig-1]*0.5*diff*ch[ig]
-	    c1[ig]=0.5*c1[ig]
-	
-	
-	c2 = np.zeros((ntheta,))
-	g1 = np.zeros((ntheta,))
-	g2 = np.zeros((ntheta,))
-	
-	for ig in np.arange(1, ntheta):
-	    c2[ig] = -0.25*diff*ch[ig]*delthet[ig-1]
-	    g1[ig] = gh[ig]/delthet[ig-1]
-	    g2[ig] = 1.0/(0.25*diff*ch[ig]*delthet[ig-1]+gh[ig]/delthet[ig-1])
-	
-	
-	psi_dum = np.zeros((ntheta,))
-	psi_dum[0] = 0.
-	psi_dum[1]=delthet[0]
-	psi_prime=psi_dum[1]/g2[1]
-	
-	for ig in np.arange(1,ntheta-1):
-	    psi_prime=psi_prime+c1[ig]*psi_dum[ig]+c2[ig]*psi_dum[ig-1]
-	    psi_dum[ig+1]=(g1[ig+1]*psi_dum[ig]+psi_prime)*g2[ig+1]
-	
-	isunstable = 0
-	for ig in np.arange(1,ntheta-1):
-	    if(psi_dum[ig]*psi_dum[ig+1] <= 0 ):
-	        isunstable = 1
-	        #print("instability detected... please choose a different equilibrium")
-	return isunstable
+        ch = np.zeros((ntheta,))
+        gh = np.zeros((ntheta,))
+        
+        for i in np.arange(1, ntheta):
+            ch[i] = 0.5*(c[i] + c[i-1]) 
+            gh[i] = 0.5*(g[i] + g[i-1])
+        
+        cflmax = np.max(np.abs(delthet**2*ch[1:]/gh[1:]))
+        
+        
+        c1 = np.zeros((ntheta,))
+        for ig in np.arange(1, ntheta-1):
+            c1[ig] = -delthet[ig]*(one_m_diff*c[ig]+0.5*diff*ch[ig+1])\
+                     -delthet[ig-1]*(one_m_diff*c[ig]+0.5*diff*ch[ig])\
+                     -delthet[ig-1]*0.5*diff*ch[ig]
+            c1[ig]=0.5*c1[ig]
+        
+        
+        c2 = np.zeros((ntheta,))
+        g1 = np.zeros((ntheta,))
+        g2 = np.zeros((ntheta,))
+        
+        for ig in np.arange(1, ntheta):
+            c2[ig] = -0.25*diff*ch[ig]*delthet[ig-1]
+            g1[ig] = gh[ig]/delthet[ig-1]
+            g2[ig] = 1.0/(0.25*diff*ch[ig]*delthet[ig-1]+gh[ig]/delthet[ig-1])
+        
+        
+        psi_dum = np.zeros((ntheta,))
+        psi_dum[0] = 0.
+        psi_dum[1]=delthet[0]
+        psi_prime=psi_dum[1]/g2[1]
+        
+        for ig in np.arange(1,ntheta-1):
+            psi_prime=psi_prime+c1[ig]*psi_dum[ig]+c2[ig]*psi_dum[ig-1]
+            psi_dum[ig+1]=(g1[ig+1]*psi_dum[ig]+psi_prime)*g2[ig+1]
+        
+        isunstable = 0
+        for ig in np.arange(1,ntheta-1):
+            if(psi_dum[ig]*psi_dum[ig+1] <= 0 ):
+                isunstable = 1
+                #print("instability detected... please choose a different equilibrium")
+        return isunstable
 
 shat = s_hat_input
-print("isunstable for the original eq =",check_ball(shat, dpdpsi))
+#print("isunstable for the original eq =",check_ball(shat, dpdpsi))
 
 
 
-want_a_scan = 0
+want_a_scan =0
 if want_a_scan == 1:
-	len1 = 200
-	len2 = 400
-	shat_grid = np.linspace(-shat*0.1, 10*shat, len1)
+	len1 = 100
+	len2 = 100
+	#shat_grid = np.linspace(-shat*0.5, 2*shat, len1)
+	shat_grid = np.linspace(2, 20, len1)
 	#shat_grid = np.linspace(0.10, 0.25, len1)
 	#dp_dpsi_grid = np.linspace(-dpdpsi*0.0001, 0.005*dpdpsi, len2)
-	dp_dpsi_grid = np.linspace(-dpdpsi*0.1, 10*dpdpsi, len2)
+	#dp_dpsi_grid = np.linspace(-dpdpsi*0.2, 5*dpdpsi, len2)
+	dp_dpsi_grid = np.linspace(0, 2, len2)
 	#dp_dpsi_grid = np.linspace(0.08, 0.12, len2)
 	ball_scan_arr = np.zeros((len1, len2))
 	#for i in range(len1):
@@ -1122,7 +960,7 @@ if want_a_scan == 1:
 
 
 	tic5 = time.perf_counter()
-	nop = int(32)
+	nop = int(48)
 	pool = mp.Pool(processes=nop)
 	tic5 = time.perf_counter()
 	results = np.array([[pool.apply_async(check_ball, args=(shat_grid[i], dp_dpsi_grid[j])) for i in range(len1)] for j in range(len2)])
@@ -1137,13 +975,13 @@ if want_a_scan == 1:
 	X, Y = np.meshgrid(shat_grid, dp_dpsi_grid)
 	Z = ball_scan_arr
 	#ax = plt.axes(projection='3d')
-	cs = plt.contour(X.T, Y.T, ball_scan_arr, levels=[0.])  
+	cs = plt.contour(X.T, Y.T*np.abs(dpsidrho)*2, ball_scan_arr, levels=[0.])  
 	data = cs.collections[0].get_paths()[0].vertices
 	plt.plot(data[:, 0], data[:, 1], '-og', ms=1.5)
 	plt.plot(shat, dpdpsi, 'or', ms=3.0)  
 	plt.xlabel('shat', fontsize=14)
-	plt.ylabel('dpdpsi', fontsize=14)
-	plt.title('betaprimeinp=-1, s_hat_input=4.24, theta0=0')
+	plt.ylabel('dbetadrho', fontsize=14)
+	plt.title('betaprimeinp=%.3f, s_hat_input=%.2f, theta0=0'%(dpdpsi*np.abs(dpsidrho)*2, s_hat_input))
 	del cs
 	#ax.plot3d(shat, dpdpsi, 1, 'or')
 	#ax.contour3D(X.T, Y.T, ball_scan_arr, 1, cmap='binary')
