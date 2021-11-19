@@ -11,9 +11,8 @@ import os
 import time
 import numpy as np
 import pickle
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 from scipy.integrate import cumtrapz as ctrap
-from scipy.signal import find_peaks
 from scipy.interpolate import InterpolatedUnivariateSpline as linspl
 from scipy.interpolate import CubicSpline as cubspl
 from scipy.integrate import cumtrapz as ctrap

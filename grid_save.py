@@ -49,8 +49,6 @@ grho_ball = reflect_n_append(grho , 'e')
 ntheta   = len(theta_ball)
 
 
-pdb.set_trace()
-
 A1 = []
 A2 = []
 A3 = [] 
@@ -85,7 +83,7 @@ for i in np.arange(1, len(headings)):
             g.write(A1[i-1][j])
 g.close()
 
-print('file successfully save! returning back to the main script')
+print('file successfully saved! returning back to the main script')
 
 
 
