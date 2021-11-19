@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 The purpose of this script is to generate a local Miller equilibrium and compare various parameters of interest with 
 eiktest(old routine on GS2) for the same equilibrium. In some ways, this script is the pythonized version of eiktest.
@@ -29,30 +30,42 @@ parnt_dir_nam = os.path.dirname(os.getcwd())
 
 # Which theta grid do you want? If all of the options below are 0
 # the default theta will be a geometric one. Recommended: staight, eqarc or collocation
-# Eqarc is equispaced, straight and collocation are not.
+# eqarc is equispaced, straight and collocation are not.
 want_eqarc = 1
 want_straight = 0
 want_collocation = 0
 
 
-ntheta = 256
-nperiod = 2
+# choose this factor(>0) to control the number of lambda points in the GS2 grid.out file
+# increasing fac decreases the number of lambda points
+fac = 0.5
+
+#If you want to see the lambda grid set lambda_knob = 1
+lambda_knob = 1
+
+
+file_idx = 42 #random number to identify your output file
+
+ntheta = 128
+nperiod = 1
 
 rhoc = 0.95
 qinp = 7.5112
-shift = -0.6525
+shift = -0.0525
 s_hat_input = 7.375
 R_geo = 1.4258      # This is the poloidal flux function F(\psi)
 Rmaj = 1.4605
-akappa = 2.1705
-akappri = -0.1775
+akappa = 1.1705
+akappri = 0.1
 tri_gs2 = 0.4074
-tripri_gs2 = 1.042
+#tripri_gs2 = 1.042
+tripri_gs2 = 0.042
 beta_prime_input =  -0.1845
 
 # The results may be sensitive to delrho! Choose carefully.
-delrho = 0.005
+delrho = 0.001
 
+print('For a valid calculation all the errors you see < 1E-2\n')
 
 #######################################################################################################################
 ########################------------ primary lowest level calculations---------------------############################
@@ -149,7 +162,8 @@ drhodZ = -dR_dt/jac
 dt_dR = -dZ_drho/jac
 dt_dZ =  dR_drho/jac
 
-test_diff = (dt_dR[1]*drhodZ[1] - dt_dZ[1]*drhodR[1])/np.sqrt(drhodR[1]**2 + drhodZ[1]**2) + 1/dermv(L, theta_comn_mag_ax, 'l', 'o')[1]
+test_diff = (dt_dR[1]*drhodZ[1] - dt_dZ[1]*drhodR[1])/np.sqrt(drhodR[1]**2 + drhodZ[1]**2) \
+            + 1/dermv(L, theta_comn_mag_ax, 'l', 'o')[1]
 #test_diff = (dt_dR[1]*drhodZ[1] - dt_dZ[1]*drhodR[1])/np.sqrt(drhodR[1]**2 + drhodZ[1]**2) + dt[1]/dl[1]
 
 if np.max(np.abs(test_diff)) > 3E-5:
@@ -158,7 +172,8 @@ else:
 	print("grad theta_geo along the surface test passed...\n")
 
 
-dpsidrho_arr = -R_geo/np.abs(2*np.pi*qfac/(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1])) # determining dpsidrho from the safety factor relation
+# determining dpsidrho from the safety factor relation
+dpsidrho_arr = -R_geo/np.abs(2*np.pi*qfac/(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1]))
 dpsidrho = dpsidrho_arr[1]
 
 #F is R_geo
@@ -183,11 +198,14 @@ grad_psi_cart = dpsidrho*np.sqrt(drhodR**2 + drhodZ**2)
 
 # gradpar_0 is b.grad(theta) where theta = collocation theta
 # should be second order accurate
-gradpar_0 = 1/(R*B)*np.array([np.abs(dpsidrho_arr[i])*np.sqrt(drhodR[i]**2 + drhodZ[i]**2) for i in range(no_of_surfs)])*(1/dermv(L, np.ones((no_of_surfs, ntheta))*theta, 'l', 'o')) 
+gradpar_0 = 1/(R*B)*np.array([np.abs(dpsidrho_arr[i])*np.sqrt(drhodR[i]**2 + drhodZ[i]**2)\
+            for i in range(no_of_surfs)])*(1/dermv(L, np.ones((no_of_surfs, ntheta))*theta, 'l', 'o')) 
 
 
 # To reiterate, this theta is neither the geometric nor flux theta
-# This calculation of gradpar_0 is only meaningful on the central surface as theta = collocation theta is only known as a function of geometric theta on the central surface. On the adjacent surfaces, we don't know the relation b/w geometric and collocation theta.
+# This calculation of gradpar_0 is only meaningful on the central surface as theta = collocation theta is only known as a
+# function of geometric theta on the central surface.
+# On the adjacent surfaces, we don't know the relation b/w geometric and collocation theta.
 
 #####################################################################################################################
 #######################------------------GRADIENTS ON FLUX THETA GRID------------------------########################
@@ -211,7 +229,8 @@ spl1 = linspl(theta_st[1], theta)
 #spline object b/w geometric theta and flux theta
 th_geo_st_spl = linspl(theta_comn_mag_ax[1], theta_st[1], k = 1)
 
-#Before we take gradients on the theta_st grid we interpolate all the important variables on to a uniform theta_st grid. Not does in this code since it increases the F_chk error significantly
+#Before we take gradients on the theta_st grid we interpolate all the important variables on to a uniform theta_st grid.
+# Not done in this code since it increases the F_chk error significantly
 theta_st_new = np.linspace(0, np.pi, ntheta)*np.reshape(np.ones((no_of_surfs,)),(-1,1))
 theta_st_new = theta_st
 theta_comn_mag_ax_new = np.zeros((no_of_surfs, ntheta))
@@ -305,14 +324,16 @@ dFdpsi = (-s_hat_input/(rho[1]*(psi_diff[1]/diffrho[1])*(1/(2*np.pi*qfac[1]*(2*n
 # psi_diff[1]/2 is essential
 F[0], F[1], F[2]= F[1]-dFdpsi*(psi_diff[1]/2), F[1], F[1]+dFdpsi*(psi_diff[1]/2)
 
-# Calculating the current from the relation (21) in Miller's paper(involving shat) and comparing it with F = q*R^2/J, where J = R*jac is the flux theta jacobian 
+# Calculating the current from the relation (21) in Miller's paper(involving shat) and comparing it with F = q*R^2/J, 
+# where J = R*jac is the flux theta jacobian 
 F_chk = np.array([np.abs(np.mean(qfac[i]*R[i]/jac[i])) for i in range(no_of_surfs)])
 
 print("F_chk error(self_consistency_chk) = %.4E\n"%(F_chk[1]-F[1]))
 
 
 ##### A bunch of basic sanity checks
-test_diff_st = (dt_dR[1]*dpsidZ[1] - dt_dZ[1]*dpsidR[1])/np.sqrt(dpsidR[1]**2 + dpsidZ[1]**2) - 1/dermv(L_st, theta_st_new, 'l', 'o')[1]
+test_diff_st = (dt_dR[1]*dpsidZ[1] - dt_dZ[1]*dpsidR[1])/np.sqrt(dpsidR[1]**2 + dpsidZ[1]**2)\
+                - 1/dermv(L_st, theta_st_new, 'l', 'o')[1]
 if np.max(np.abs(test_diff_st)) > 6E-5:
 	print("grad theta_st along l doesn't match...error = %.4E\n"%(np.max(np.abs(test_diff_st))))
 else:
@@ -405,8 +426,9 @@ gbdrift0 =  1/(B2_ex**2)*dpsidrho*F[1]/R_ex*(dqdr[1]*dB2l_ex/dl_ex)
 
 ####################-------------------dBr calculation-----------------------------####################
 
-#We use Miller's equations to find dBdr using the information given on the middle surface. Miller and Bishop subscripts have been used interchangeably
-#dBdr_bish = (B_p**2/B*(1/R_c + dpdpsi*R/(B_p) + F*dFdpsi/dpsi_dr) + B_t**2/(R*B)*(np.sin(u_ML) - dFdpsi/F*R*dpsi_dr))
+#We use Miller's equations to find dBdr using the information given on the middle surface.
+# Miller and Bishop subscripts have been used interchangeably
+# dBdr_bish = (B_p**2/B*(1/R_c + dpdpsi*R/(B_p) + F*dFdpsi/dpsi_dr) + B_t**2/(R*B)*(np.sin(u_ML) - dFdpsi/F*R*dpsi_dr))
 dBdr_bish = B_p_ex/B_ex*(-B_p_ex/R_c_ex + dpdpsi*R_ex - F[1]**2*np.sin(u_ML_ex)/(R_ex**3*B_p_ex))
 #dBdr_bish_2 = B_p_ex/B_ex*(B_p_ex/R_c_ex + dpdpsi*R_ex - F[1]**2*np.sin(u_ML_ex)/(R_ex**3*B_p_ex))
 dBdr = dBdr_bish
@@ -456,19 +478,29 @@ gbdrift_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gbdrift)
 
 
 if want_eqarc == 1:
-	eikcoefs_dict = {'theta_ex':theta_eqarc_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_eqarc_new_ex, 'R_ex':R_eqarc_new_ex, 'B_ex':B_eqarc_new_ex, 'gds21_ex':gds21_eqarc_new_ex, 'gds22_ex':gds22_eqarc_new_ex, 'gds2_ex':gds2_eqarc_new_ex, 'grho_ex':grho_eqarc_new_ex, 'gbdrift_ex':gbdrift_eqarc_new_ex, 'cvdrift_ex':cvdrift_eqarc_new_ex, 'gbdrift0_ex':gbdrift0_eqarc_new_ex, 'cvdrift0_ex':gbdrift0_eqarc_new_ex, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho}
+    eikcoefs_dict = {'theta_ex':theta_eqarc_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_eqarc_new_ex, 'R_ex':R_eqarc_new_ex,\
+                    'B_ex':B_eqarc_new_ex, 'gds21_ex':gds21_eqarc_new_ex, 'gds22_ex':gds22_eqarc_new_ex, 'gds2_ex':gds2_eqarc_new_ex,\
+                    'grho_ex':grho_eqarc_new_ex, 'gbdrift_ex':gbdrift_eqarc_new_ex, 'cvdrift_ex':cvdrift_eqarc_new_ex,\
+                    'gbdrift0_ex':gbdrift0_eqarc_new_ex, 'cvdrift0_ex':gbdrift0_eqarc_new_ex, 'qfac':qfac[1], 'shat':s_hat_input,\
+                    'dpsidrho':dpsidrho, 'Z_ex': Z_ex, 'aplot':alpha, 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx}
 
 elif want_straight == 1:
-
-	eikcoefs_dict = {'theta_ex':theta_st_new_ex,  'nperiod':nperiod,'gradpar_ex':gradpar_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1], 'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0, 'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho}
+    eikcoefs_dict = {'theta_ex':theta_st_new_ex,  'nperiod':nperiod,'gradpar_ex':gradpar_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
+                    'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
+                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
+                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx}
 
 elif want_collocation == 1:
-
-	eikcoefs_dict = {'theta_ex':theta_col_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_col_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1], 'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0, 'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho}
+    eikcoefs_dict = {'theta_ex':theta_col_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_col_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
+                    'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
+                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
+                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx}
 
 else:# theta geometric
-
-	eikcoefs_dict = {'theta_ex':theta_comn_mag_ax_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_geo_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1], 'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0, 'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho}
+    eikcoefs_dict = {'theta_ex':theta_comn_mag_ax_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_geo_ex[0], 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
+                    'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0, \
+                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha, 'aprime':aprime_bish,\
+                    'fac':fac, 'file_idx':file_idx}
 
 
 dict_file = open('eikcoefs_dict.pkl', 'wb')

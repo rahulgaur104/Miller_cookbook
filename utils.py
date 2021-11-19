@@ -5,6 +5,7 @@ This script contains all the functions that are called by the main script local_
 
 
 import numpy as np
+from scipy.signal import find_peaks
 
 def derm(arr, ch, par='e'):
     # Finite difference subroutine
@@ -219,6 +220,9 @@ def reflect_n_append(arr, ch):
                     brr = np.concatenate((-arr[::-1][:-1],np.array([0.]), arr[1:]))
 	return brr
 
+
+
+
 def find_optim_theta_arr(arr, theta_arr, res_par):
         # The purpose of this routine is to optimize the size of the theta array so that one can keep all the important features 
         # with the minimum number of theta points. This routine is only used when one wants to save a grid.out file for a GS2 run
@@ -262,16 +266,17 @@ def find_optim_theta_arr(arr, theta_arr, res_par):
 
         return theta_arr[comb_peaks]
 
-def lambda_create(arr):
+def lambda_create(arr, fac):
     arr1 = np.sort(np.unique(1/arr))
+    #arr1 = arr 
     diff_arr1 = np.diff(arr1)
-    req_diff = np.mean(diff_arr1)/10
+    req_diff = np.mean(diff_arr1)/fac
     idx = [arr1[0], arr1[-1]]
     
     diff_arr_sum = 0
     i = 1
     while i < len(arr1)-1:
-        if diff_arr1[i] <= req_diff:
+        if diff_arr1[i] <= req_diff and diff_arr_sum <= 3*req_diff:
             diff_arr_sum = diff_arr_sum + req_diff
         else:
             idx.append(arr1[i])
@@ -279,3 +284,5 @@ def lambda_create(arr):
         i = i + 1
 
     return np.unique(np.array(idx))
+
+
