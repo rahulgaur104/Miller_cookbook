@@ -11,6 +11,6 @@ For the moment:
 * No guarantee that the local equilibrium is MHD stable. Difficult.
 
 ## Relevant papers
-* [Non-circular, finite aspect ratio, local equilibrium model](https://aip.scitation.org/doi/10.1063/1.872666) R. L. Miller et al.\
-* [Construction of local axisymmetric MHD equilibria](https://inis.iaea.org/search/searchsinglerecord.aspx?recordsFor=SingleRecord&RN=17000660) C.M. Bishop\
+* [Non-circular, finite aspect ratio, local equilibrium model](https://aip.scitation.org/doi/10.1063/1.872666) R. L. Miller et al.
+* [Construction of local axisymmetric MHD equilibria](https://inis.iaea.org/search/searchsinglerecord.aspx?recordsFor=SingleRecord&RN=17000660) C.M. Bishop
 * [Mercier C and Luc N 1974 Technical Report Commission of the European Communities Report No EUR-5127e 140 Brussels]
