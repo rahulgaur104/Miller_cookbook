@@ -5,10 +5,10 @@ This script creates a local Miller equilibrium for Tokamaks and generates all th
 
 ## Limitations
 For the moment:
-* The code only works with Miller(up-down symmetric) equilibria
-* There is no algorithm to handle more than 2 magnetic wells. Non-trivial to add arbitrary wells. See Jessica Baumgaertel's [thesis](https://dataspace.princeton.edu/handle/88435/dsp010r9673776)(FIGG code).
-* Only kx = 0 data can be generated. Not hard to generalize.
-* No guarantee that the local equilibrium is MHD stable. Difficult.
+* the code only works with Miller(up-down symmetric) equilibria
+* there is no algorithm to handle more than 2 magnetic wells. Non-trivial to add arbitrary wells. See Jessica Baumgaertel's [thesis](https://dataspace.princeton.edu/handle/88435/dsp010r9673776)(FIGG code).
+* tnly kx = 0 data can be generated. Not hard to generalize.
+* to guarantee that the local equilibrium is MHD stable. Difficult.
 
 ## Relevant papers
 * [Non-circular, finite aspect ratio, local equilibrium model](https://aip.scitation.org/doi/10.1063/1.872666) R. L. Miller et al.
