@@ -1,4 +1,4 @@
-# Miller-cookbook
+# Miller cookbook
 Local equilibrium to GX/GS2 interface
 
 This script creates a local Miller equilibrium for Tokamaks and generates all the relevant data needed for a gyrofluid calculation with GX or a gyrokinetic calculation with GS2 of that equilibrium.
