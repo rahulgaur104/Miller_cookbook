@@ -1,14 +1,14 @@
 # Mercier-Luc-local-cookbook
-Local equilibrium to GS2 interface
+Local equilibrium to GX/GS2 interface
 
-This script creates a local Miller equilibrium for Tokamaks and generates all the relevant data needed for a gyrofluid calculation with GX or gyrokinetic calculation with GS2 of that equilibrium.
+This script creates a local Miller equilibrium for Tokamaks and generates all the relevant data needed for a gyrofluid calculation with GX or a gyrokinetic calculation with GS2 of that equilibrium.
 
 ## Limitations
 For the moment:
-* The code only works with Miller equilibria
-* There is no algorithm to handle more than 2 magnetic wells
-* Only kx = 0 data can be generated 
-* No guarantee that the local equilibrium is MHD stable
+* The code only works with Miller(up-down symmetric) equilibria
+* There is no algorithm to handle more than 2 magnetic wells. Non-trivial to add arbitrary wells. See Jessical Baumgaertel's thesis(FIGG code).
+* Only kx = 0 data can be generated. Not hard to generalize.
+* No guarantee that the local equilibrium is MHD stable. Difficult.
 
 ## Relevant papers:\
 * [Non-circular, finite aspect ratio, local equilibrium model](https://aip.scitation.org/doi/10.1063/1.872666)R. L. Miller et al.\\
