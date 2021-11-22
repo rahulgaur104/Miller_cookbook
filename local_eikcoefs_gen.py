@@ -30,7 +30,7 @@ parnt_dir_nam = os.path.dirname(os.getcwd())
 
 # Which theta grid do you want? If all of the options below are 0
 # the default theta will be a geometric one. Recommended: staight, eqarc or collocation
-# eqarc is equispaced, straight and collocation are not.
+# EQARC IS EQUISPACED, straight and collocation are not.
 want_eqarc = 1
 want_straight = 0
 want_collocation = 0
@@ -43,7 +43,6 @@ fac = 0.5
 #If you want to see the lambda grid set lambda_knob = 1
 lambda_knob = 1
 
-
 file_idx = 42 #random number to identify your output file
 
 ntheta = 128
@@ -53,7 +52,13 @@ rhoc = 0.95
 qinp = 7.5112
 shift = -0.0525
 s_hat_input = 7.375
+
+# YOU MUST set Bunit = 0 if you have the R_geo value
+Bunit = 17.49
+a = 0.570
+
 R_geo = 1.4258      # This is the poloidal flux function F(\psi)
+
 Rmaj = 1.4605
 akappa = 1.1705
 akappri = 0.1
@@ -137,6 +142,9 @@ for i in range(no_of_surfs):
 
 dt = derm(theta_comn_mag_ax, 'l', 'o')
 
+
+
+
 rho_diff = derm(rho, 'r')
 # partial derivatives of R and Z on the exact rho and theta_geometric grid
 dR_drho = derm(R, 'r')/rho_diff
@@ -171,6 +179,9 @@ if np.max(np.abs(test_diff)) > 3E-5:
 else:
 	print("grad theta_geo along the surface test passed...\n")
 
+if Bunit != 0:
+    grho0 = np.sqrt(drhodR**2 + drhodZ**2)
+    R_geo = 1/ctrap(1/(R[1]*grho0[1]), L[1], initial=0)[-1]*Bunit*rhoc/a**2
 
 # determining dpsidrho from the safety factor relation
 dpsidrho_arr = -R_geo/np.abs(2*np.pi*qfac/(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1]))
