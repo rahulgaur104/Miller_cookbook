@@ -9,7 +9,6 @@ import pdb
 import numpy as np
 import pickle
 from utils import *
-from matplotlib import pyplot as plt
 
 eikcoefs_dict = sys.argv[1]
 parnt_dir_nam = os.getcwd()
@@ -39,6 +38,7 @@ aplot    = eikcoefs_dict['aplot']
 aprime   = eikcoefs_dict['aprime']
 fac      = eikcoefs_dict['fac']
 file_idx = eikcoefs_dict['file_idx']
+lambda_knob = eikcoefs_dict['lambda_knob']
 
 
 gradpar_ball = reflect_n_append(gradpar, 'e')
@@ -146,11 +146,14 @@ print("The number of lambda points = %d\n"%int(nlambda))
 
 response = input("Do you want to save a GS2 grid file with %d lambda points? (y/n)\n"%(nlambda))
 
+
 #pdb.set_trace()
-plt.plot(np.array(theta_uni), np.array(B1) , '-sg', ms=3)
-#plt.plot(theta_ball0, B0 , '-sg', ms=3)
-plt.hlines(1/(lambda_arr) ,  xmin=-10, xmax=10)
-plt.show()
+if lambda_knob = 1:
+    from matplotlib import pyplot as plt
+    plt.plot(np.array(theta_uni), np.array(B1) , '-sg', ms=3)
+    #plt.plot(theta_ball0, B0 , '-sg', ms=3)
+    plt.hlines(1/(lambda_arr) ,  xmin=-1, xmax=4)
+    plt.show()
 
 if response == 'n':
     sys.exit()

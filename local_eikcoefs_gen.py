@@ -53,7 +53,8 @@ qinp = 7.5112
 shift = -0.0525
 s_hat_input = 7.375
 
-# YOU MUST set Bunit = 0 if you have the R_geo value
+# YOU MUST set Bunit = 0 if you have the R_geo value else 
+# the Bunit calc will replace R_geo
 Bunit = 17.49
 a = 0.570
 
@@ -69,6 +70,12 @@ beta_prime_input =  -0.1845
 
 # The results may be sensitive to delrho! Choose carefully.
 delrho = 0.001
+
+# Normalizing variables. Do not change
+a_N = 1
+B_N = 1
+
+
 
 print('For a valid calculation all the errors you see < 1E-2\n')
 
@@ -493,25 +500,26 @@ if want_eqarc == 1:
                     'B_ex':B_eqarc_new_ex, 'gds21_ex':gds21_eqarc_new_ex, 'gds22_ex':gds22_eqarc_new_ex, 'gds2_ex':gds2_eqarc_new_ex,\
                     'grho_ex':grho_eqarc_new_ex, 'gbdrift_ex':gbdrift_eqarc_new_ex, 'cvdrift_ex':cvdrift_eqarc_new_ex,\
                     'gbdrift0_ex':gbdrift0_eqarc_new_ex, 'cvdrift0_ex':gbdrift0_eqarc_new_ex, 'qfac':qfac[1], 'shat':s_hat_input,\
-                    'dpsidrho':dpsidrho, 'Z_ex': Z_ex, 'aplot':alpha, 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx}
+                    'dpsidrho':dpsidrho, 'Z_ex': Z_ex, 'aplot':alpha, 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,\
+                    'lambda_knob':lambda_knob}
 
 elif want_straight == 1:
     eikcoefs_dict = {'theta_ex':theta_st_new_ex,  'nperiod':nperiod,'gradpar_ex':gradpar_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
                     'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
-                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx}
+                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob }
 
 elif want_collocation == 1:
     eikcoefs_dict = {'theta_ex':theta_col_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_col_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
                     'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
-                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx}
+                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob }
 
 else:# theta geometric
     eikcoefs_dict = {'theta_ex':theta_comn_mag_ax_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_geo_ex[0], 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0, \
                     'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha, 'aprime':aprime_bish,\
-                    'fac':fac, 'file_idx':file_idx}
+                    'fac':fac, 'file_idx':file_idx, 'lambda_knob':lambda_knob}
 
 
 dict_file = open('eikcoefs_dict.pkl', 'wb')
