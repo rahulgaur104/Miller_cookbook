@@ -56,7 +56,7 @@ s_hat_input = 7.375
 # YOU MUST set Bunit = 0 if you have the R_geo value else 
 # the Bunit calc will replace R_geo
 Bunit = 17.49
-a = 0.570
+a = 0.570           # minor radius
 
 R_geo = 1.4258      # This is the poloidal flux function F(\psi)
 
