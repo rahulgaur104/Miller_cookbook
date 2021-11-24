@@ -2,10 +2,8 @@
 """
 The purpose of this script is to generate a local Miller equilibrium and compare various parameters of interest with 
 eiktest(old routine on GS2) for the same equilibrium. In some ways, this script is the pythonized version of eiktest.
-
-Additionally, it also performs a ballooning stability analysis based on Newcomb's theorem both in the collocation and the flux(straight-field-line) theta grid.
-
 The derivatives are calculated usign a central-difference method. The integrals are performed using a trapezoidal sum.
+This script starts with 
 
 """
 import os   
@@ -18,6 +16,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline as linspl
 from scipy.interpolate import CubicSpline as cubspl
 from scipy.integrate import cumtrapz as ctrap
 from utils import *
+from matplotlib import pyplot as plt
 import pdb 
 
 parnt_dir_nam = os.path.dirname(os.getcwd())
@@ -46,34 +45,33 @@ lambda_knob = 1
 file_idx = 42 #random number to identify your output file
 
 ntheta = 128
-nperiod = 1
+nperiod = 2
 
-rhoc = 0.95
-qinp = 7.5112
-shift = -0.0525
-s_hat_input = 7.375
+rhoc = 0.454
+qinp = 0.961
+shift = -0.060
+s_hat_input = 0.164
 
 # YOU MUST set Bunit = 0 if you have the R_geo value else 
 # the Bunit calc will replace R_geo
 Bunit = 17.49
 a = 0.570           # minor radius
 
-R_geo = 1.4258      # This is the poloidal flux function F(\psi)
+# Normalizing variables. Do not change
+a_N = a
+B_N = Bunit
 
-Rmaj = 1.4605
-akappa = 1.1705
-akappri = 0.1
-tri_gs2 = 0.4074
+Rmaj = 1.850/a_N
+akappa = 1.398
+akappri = 0.0102
+tri_gs2 = -0.057
 #tripri_gs2 = 1.042
-tripri_gs2 = 0.042
-beta_prime_input =  -0.1845
+tripri_gs2 = 0.026
+beta_prime_input = -0.1845 
 
 # The results may be sensitive to delrho! Choose carefully.
 delrho = 0.001
 
-# Normalizing variables. Do not change
-a_N = 1
-B_N = 1
 
 
 
@@ -188,10 +186,11 @@ else:
 
 if Bunit != 0:
     grho0 = np.sqrt(drhodR**2 + drhodZ**2)
-    R_geo = 1/ctrap(1/(R[1]*grho0[1]), L[1], initial=0)[-1]*Bunit*rhoc/a**2
+    R_geo = 1/ctrap(1/(R[1]*grho0[1]), L[1], initial=0)[-1]*rhoc # R_geo = F/(a*Bunit).Note the missing a_N
 
 # determining dpsidrho from the safety factor relation
-dpsidrho_arr = -R_geo/np.abs(2*np.pi*qfac/(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1]))
+#dpsidrho_arr = -R_geo/np.abs(2*np.pi*qfac/(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1]))
+dpsidrho_arr = -(R_geo/np.abs(2*np.pi*qfac))*np.abs(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1])
 dpsidrho = dpsidrho_arr[1]
 
 #F is R_geo
@@ -346,7 +345,7 @@ F[0], F[1], F[2]= F[1]-dFdpsi*(psi_diff[1]/2), F[1], F[1]+dFdpsi*(psi_diff[1]/2)
 # where J = R*jac is the flux theta jacobian 
 F_chk = np.array([np.abs(np.mean(qfac[i]*R[i]/jac[i])) for i in range(no_of_surfs)])
 
-print("F_chk error(self_consistency_chk) = %.4E\n"%(F_chk[1]-F[1]))
+print("F_chk error(self_consistency_chk) = %.4E\n"%((F_chk[1]-F[1])*(a_N*B_N)))
 
 
 ##### A bunch of basic sanity checks
@@ -441,7 +440,6 @@ gbdrift0 =  1/(B2_ex**2)*dpsidrho*F[1]/R_ex*(dqdr[1]*dB2l_ex/dl_ex)
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gbdrift0[1]))
 #theta_eq_arc = eqarc_creator(gradpar, theta_st_new_ex)
 
-
 ####################-------------------dBr calculation-----------------------------####################
 
 #We use Miller's equations to find dBdr using the information given on the middle surface.
@@ -494,7 +492,7 @@ gbdrift_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gbdrift)
 ################---------------PACKING EIKCOEFS INTO A DICTIONARY------------------########################
 ##########################################################################################################
 
-
+#pdb.set_trace()
 if want_eqarc == 1:
     eikcoefs_dict = {'theta_ex':theta_eqarc_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_eqarc_new_ex, 'R_ex':R_eqarc_new_ex,\
                     'B_ex':B_eqarc_new_ex, 'gds21_ex':gds21_eqarc_new_ex, 'gds22_ex':gds22_eqarc_new_ex, 'gds2_ex':gds2_eqarc_new_ex,\

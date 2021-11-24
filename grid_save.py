@@ -52,6 +52,16 @@ gds21_ball = reflect_n_append(gds21, 'o')
 gds22_ball = reflect_n_append(gds22 , 'e')
 grho_ball = reflect_n_append(grho , 'e')
 
+Rplot_ball = reflect_n_append(R, 'o')
+Rprime_ball = reflect_n_append(aprime, 'o')
+
+Zplot_ball = reflect_n_append(Z, 'o')
+Zprime_ball = reflect_n_append(aprime, 'o')
+
+aplot_ball = reflect_n_append(aplot[1], 'o')
+aprime_ball = reflect_n_append(aprime, 'o')
+
+
 ntheta   = len(theta_ball)
 
 
@@ -64,15 +74,21 @@ A2 = []
 A3 = [] 
 A4 = [] 
 A5 = [] 
+A6 = [] 
+A7 = [] 
+A8 = [] 
 
 for i in range(ntheta):
 	A2.append('    %.9f    %.9f    %.9f    %.9f\n'%(gbdrift_ball[i], gradpar_ball[i], grho_ball[i], theta_ball[i]))
 	A3.append('    %.9f    %.9f    %.12f    %.9f\n'%(cvdrift_ball[i], gds2_ball[i], B_ball[i], theta_ball[i]))
 	A4.append('    %.9f    %.9f    %.9f\n'%(gds21_ball[i], gds22_ball[i], theta_ball[i]))
 	A5.append('    %.9f    %.9f    %.9f\n'%(gbdrift0_ball[i], gbdrift0_ball[i], theta_ball[i]))
+	A6.append('    %.9f    %.9f    %.9f\n'%(Rplot_ball[i], Rprime_ball[i], theta_ball[i]))
+	A7.append('    %.9f    %.9f    %.9f\n'%(Zplot_ball[i], Zprime_ball[i], theta_ball[i]))
+	A8.append('    %.9f    %.9f    %.9f\n'%(aplot_ball[i], aprime_ball[i], theta_ball[i]))
 
 
-A1.append([A2, A3, A4, A5])
+A1.append([A2, A3, A4, A5, A6, A7, A8])
 A1 = A1[0]
 
 char = "grid.gryfx_out_Miller_%d_nperiod_%d_nt%d"%(int(file_idx), nperiod, ntheta)
@@ -106,7 +122,7 @@ if np.max(theta) > np.pi:
     B0 = B_ball[theta_ball <= np.pi]
     theta_ball0 = theta_ball[theta_ball <= np.pi]
     B0 = B0[theta_ball0 >= 0]
-    theta_ball0 = theta_ball0[theta_ball >= 0]
+    theta_ball0 = theta_ball0[theta_ball0 >= 0]
 else:
     B0 = B
     theta_ball0 = theta
@@ -148,7 +164,7 @@ response = input("Do you want to save a GS2 grid file with %d lambda points? (y/
 
 
 #pdb.set_trace()
-if lambda_knob = 1:
+if lambda_knob == 1:
     from matplotlib import pyplot as plt
     plt.plot(np.array(theta_uni), np.array(B1) , '-sg', ms=3)
     #plt.plot(theta_ball0, B0 , '-sg', ms=3)
@@ -181,10 +197,7 @@ g.writelines('  %d    %d    %d   %0.4f   %0.4f    %.6f   %.1f   %.5f\n'%((ntheta
 for i in np.arange(3, len(headings)):
     g.writelines(headings[i])
     for j in range(ntheta):
-        if i <= 6:
-            g.write(A1[i-3][j])
-        else:
-            g.write(A1[-1][j])
+        g.write(A1[i-3][j])
 g.close()
 
 print('GS2 file saved successfully! returning back to the main script')
