@@ -17,29 +17,29 @@ dict_file = open(eikcoefs_dict, 'rb')
 eikcoefs_dict = pickle.load(dict_file)
 
 
-theta    = eikcoefs_dict['theta_ex']
-nperiod  = eikcoefs_dict['nperiod']
-qfac     = eikcoefs_dict['qfac']
-shat     = eikcoefs_dict['shat']
-dpsidrho = eikcoefs_dict['dpsidrho']
-gradpar  = eikcoefs_dict['gradpar_ex']
-R        = eikcoefs_dict['R_ex']
-Z        = eikcoefs_dict['Z_ex']
-B        = eikcoefs_dict['B_ex']
-gds21    = eikcoefs_dict['gds21_ex']
-gds22    = eikcoefs_dict['gds22_ex']
-gds2     = eikcoefs_dict['gds2_ex']
-grho     = eikcoefs_dict['grho_ex']
-gbdrift  = eikcoefs_dict['gbdrift_ex']
-cvdrift  = eikcoefs_dict['cvdrift_ex']
-gbdrift0 = eikcoefs_dict['gbdrift0_ex']
-cvdrift0 = gbdrift0
-aplot    = eikcoefs_dict['aplot']
-aprime   = eikcoefs_dict['aprime']
-fac      = eikcoefs_dict['fac']
-file_idx = eikcoefs_dict['file_idx']
+theta       = eikcoefs_dict['theta_ex']
+nperiod     = eikcoefs_dict['nperiod']
+qfac        = eikcoefs_dict['qfac']
+shat        = eikcoefs_dict['shat']
+dpsidrho    = eikcoefs_dict['dpsidrho']
+gradpar     = eikcoefs_dict['gradpar_ex']
+R           = eikcoefs_dict['R_ex']
+Z           = eikcoefs_dict['Z_ex']
+B           = eikcoefs_dict['B_ex']
+gds21       = eikcoefs_dict['gds21_ex']
+gds22       = eikcoefs_dict['gds22_ex']
+gds2        = eikcoefs_dict['gds2_ex']
+grho        = eikcoefs_dict['grho_ex']
+gbdrift     = eikcoefs_dict['gbdrift_ex']
+cvdrift     = eikcoefs_dict['cvdrift_ex']
+gbdrift0    = eikcoefs_dict['gbdrift0_ex']
+cvdrift0    = gbdrift0
+aplot       = eikcoefs_dict['aplot']
+aprime      = eikcoefs_dict['aprime']
+fac         = eikcoefs_dict['fac']
+file_idx    = eikcoefs_dict['file_idx']
 lambda_knob = eikcoefs_dict['lambda_knob']
-
+u_ML        = eikcoefs_dict['u_ML']
 
 gradpar_ball = reflect_n_append(gradpar, 'e')
 theta_ball = reflect_n_append(theta, 'o')
@@ -52,11 +52,11 @@ gds21_ball = reflect_n_append(gds21, 'o')
 gds22_ball = reflect_n_append(gds22 , 'e')
 grho_ball = reflect_n_append(grho , 'e')
 
-Rplot_ball = reflect_n_append(R, 'o')
-Rprime_ball = reflect_n_append(aprime, 'o')
+Rplot_ball = reflect_n_append(R, 'e')
+Rprime_ball = reflect_n_append(nperiod_data_extend(np.sin(u_ML[theta <= np.pi]), nperiod, istheta=0, par='e'), 'e')
 
 Zplot_ball = reflect_n_append(Z, 'o')
-Zprime_ball = reflect_n_append(aprime, 'o')
+Zprime_ball = -reflect_n_append(nperiod_data_extend(np.cos(u_ML[theta <= np.pi]), nperiod, istheta=0, par='o'), 'o')
 
 aplot_ball = reflect_n_append(aplot[1], 'o')
 aprime_ball = reflect_n_append(aprime, 'o')

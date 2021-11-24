@@ -15,7 +15,6 @@ from scipy.interpolate import InterpolatedUnivariateSpline as linspl
 from scipy.interpolate import CubicSpline as cubspl
 from scipy.integrate import cumtrapz as ctrap
 from utils import *
-from matplotlib import pyplot as plt
 import pdb 
 
 parnt_dir_nam = os.path.dirname(os.getcwd())
@@ -498,25 +497,25 @@ if want_eqarc == 1:
                     'grho_ex':grho_eqarc_new_ex, 'gbdrift_ex':gbdrift_eqarc_new_ex, 'cvdrift_ex':cvdrift_eqarc_new_ex,\
                     'gbdrift0_ex':gbdrift0_eqarc_new_ex, 'cvdrift0_ex':gbdrift0_eqarc_new_ex, 'qfac':qfac[1], 'shat':s_hat_input,\
                     'dpsidrho':dpsidrho, 'Z_ex': Z_ex, 'aplot':alpha, 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,\
-                    'lambda_knob':lambda_knob}
+                    'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
 
 elif want_straight == 1:
     eikcoefs_dict = {'theta_ex':theta_st_new_ex,  'nperiod':nperiod,'gradpar_ex':gradpar_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
                     'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
-                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob }
+                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
 
 elif want_collocation == 1:
     eikcoefs_dict = {'theta_ex':theta_col_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_col_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
                     'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
-                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob }
+                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
 
 else:# theta geometric
     eikcoefs_dict = {'theta_ex':theta_comn_mag_ax_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_geo_ex[0], 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0, \
                     'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha, 'aprime':aprime_bish,\
-                    'fac':fac, 'file_idx':file_idx, 'lambda_knob':lambda_knob}
+                    'fac':fac, 'file_idx':file_idx, 'lambda_knob':lambda_knob,'u_ML':u_ML_ex}
 
 
 dict_file = open('eikcoefs_dict.pkl', 'wb')
