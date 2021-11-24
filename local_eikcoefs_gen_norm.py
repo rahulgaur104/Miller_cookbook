@@ -3,7 +3,6 @@
 The purpose of this script is to generate a local Miller equilibrium and compare various parameters of interest with 
 eiktest(old routine on GS2) for the same equilibrium. In some ways, this script is the pythonized version of eiktest.
 The derivatives are calculated usign a central-difference method. The integrals are performed using a trapezoidal sum.
-This script starts with 
 
 """
 import os   
