@@ -16,7 +16,6 @@ parnt_dir_nam = os.getcwd()
 dict_file = open(eikcoefs_dict, 'rb')
 eikcoefs_dict = pickle.load(dict_file)
 
-
 theta       = eikcoefs_dict['theta_ex']
 nperiod     = eikcoefs_dict['nperiod']
 qfac        = eikcoefs_dict['qfac']
