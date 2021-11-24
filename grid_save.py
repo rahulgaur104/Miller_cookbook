@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This script saves the eikcoefs data coming from local_eikcoefs_gen.py
+This script saves the eikcoefs data coming from local_eikcoefs_gen_norm.py
 """
 
 import os
@@ -70,11 +70,11 @@ ntheta   = len(theta_ball)
 
 A1 = []
 A2 = []
-A3 = [] 
-A4 = [] 
-A5 = [] 
-A6 = [] 
-A7 = [] 
+A3 = []
+A4 = []
+A5 = []
+A6 = []
+A7 = []
 A8 = [] 
 
 for i in range(ntheta):

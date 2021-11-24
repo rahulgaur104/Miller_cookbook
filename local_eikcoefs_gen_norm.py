@@ -55,6 +55,9 @@ s_hat_input = 0.164
 Bunit = 17.49
 a = 0.570           # minor radius
 
+# IF BUNIT = 0, R_geo specifiec below will be used
+R_geo = 12345
+
 # Normalizing variables. Do not change
 a_N = a
 B_N = Bunit
@@ -69,8 +72,6 @@ beta_prime_input = -0.1845
 
 # The results may be sensitive to delrho! Choose carefully.
 delrho = 0.001
-
-
 
 
 print('For a valid calculation all the errors you see < 1E-2\n')
@@ -110,19 +111,15 @@ Z = np.array([kappa[i]*(rho[i])*np.sin(theta) for i in range(no_of_surfs)])
 R0 = R.copy()
 Z0 = Z.copy()
 
-
 ## Quick intersection check. If shift is large, surfaces can intersect
-# to check is the equilibrium sufaces intersect with each other
+# To check if the equilibrium sufaces intersect with each other
 if intersection_chk(R, Z, R_mag_ax) != 0:
 	print("WARNING! Surfaces intersect...\n")
 else:
 	print("curve intersection check passed... surfaces do not intersect\n")
 
-
 # theta array with a common magnetic axis
 theta_comn_mag_ax = np.array([np.arctan2(Z[i], R[i]-R_mag_ax) for i in range(no_of_surfs)])
-
-
         
 dRj = np.zeros((no_of_surfs, ntheta))
 dZj = np.zeros((no_of_surfs, ntheta))
@@ -144,23 +141,13 @@ for i in range(no_of_surfs):
     L[i, 1:] = np.cumsum(np.sqrt(np.diff(R[i])**2 + np.diff(Z[i])**2))
 
 dt = derm(theta_comn_mag_ax, 'l', 'o')
-
-
-
-
 rho_diff = derm(rho, 'r')
 # partial derivatives of R and Z on the exact rho and theta_geometric grid
 dR_drho = derm(R, 'r')/rho_diff
 
-# will be first order accurate since theta_comn_mag_ax is not equispaced
-#dR_dt = derm(R, 'l', 'e')/dt
-
 # should be second order accurate
 dR_dt = dermv(R, theta_comn_mag_ax, 'l', 'e')
 dZ_drho = derm(Z, 'r')/rho_diff
-
-# will be first order accurate since theta_comn_mag_ax is not equispaced
-#dZ_dt = derm(Z, 'l', 'o')/dt
 
 # should be second order accurate
 dZ_dt = dermv(Z, theta_comn_mag_ax, 'l', 'o')
@@ -175,7 +162,6 @@ dt_dZ =  dR_drho/jac
 
 test_diff = (dt_dR[1]*drhodZ[1] - dt_dZ[1]*drhodR[1])/np.sqrt(drhodR[1]**2 + drhodZ[1]**2) \
             + 1/dermv(L, theta_comn_mag_ax, 'l', 'o')[1]
-#test_diff = (dt_dR[1]*drhodZ[1] - dt_dZ[1]*drhodR[1])/np.sqrt(drhodR[1]**2 + drhodZ[1]**2) + dt[1]/dl[1]
 
 if np.max(np.abs(test_diff)) > 3E-5:
 	print("grad theta_geo along l don't match...error = %.4E \n"%(np.max(np.abs(test_diff))))
@@ -184,14 +170,14 @@ else:
 
 if Bunit != 0:
     grho0 = np.sqrt(drhodR**2 + drhodZ**2)
-    R_geo = 1/ctrap(1/(R[1]*grho0[1]), L[1], initial=0)[-1]*rhoc # R_geo = F/(a*Bunit).Note the missing a_N
+    R_geo = 1/ctrap(1/(R[1]*grho0[1]), L[1], initial=0)[-1]*rhoc # R_geo = F/(a*Bunit).Note the missing a_N goes into grho0 since its already normalized
 
 # determining dpsidrho from the safety factor relation
 #dpsidrho_arr = -R_geo/np.abs(2*np.pi*qfac/(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1]))
 dpsidrho_arr = -(R_geo/np.abs(2*np.pi*qfac))*np.abs(2*ctrap(jac/R, theta_comn_mag_ax)[:, -1])
 dpsidrho = dpsidrho_arr[1]
 
-#F is R_geo
+#Normalized F is R_geo
 F = np.ones((3,))*R_geo
 drhodpsi = 1/dpsidrho
 
@@ -220,8 +206,6 @@ gradpar_0 = 1/(R*B)*np.array([np.abs(dpsidrho_arr[i])*np.sqrt(drhodR[i]**2 + drh
 # To reiterate, this theta is neither the geometric nor flux theta
 # This calculation of gradpar_0 is only meaningful on the central surface as theta = collocation theta is only known as a
 # function of geometric theta on the central surface.
-# On the adjacent surfaces, we don't know the relation b/w geometric and collocation theta.
-
 #####################################################################################################################
 #######################------------------GRADIENTS ON FLUX THETA GRID------------------------########################
 #####################################################################################################################
@@ -229,8 +213,6 @@ gradpar_0 = 1/(R*B)*np.array([np.abs(dpsidrho_arr[i])*np.sqrt(drhodR[i]**2 + drh
 # Calculating theta_f or theta_st from the cartesian derivatives.
 # Note that this theta_st is only meaningful for the central surface. 
 #This happens because we only know the exactvalue of F on the central surface.
-#We cannot get the values of F on the adjacent surfaces without using the Bishop recipe which comes later in this script. 
-# For more information, please refer to the second reference in the repos README.md
 
 for i in range(no_of_surfs):
 	 theta_st[i, 1:] = ctrap(np.abs(np.reshape(F,(-1,1))[i]*(1/dpsidrho_arr[i])*jac[i]/R[i]), theta_comn_mag_ax[i])
@@ -327,6 +309,11 @@ dl_ex = nperiod_data_extend(dl[1], nperiod)
 L_st_ex = np.concatenate((np.array([0.]), np.cumsum(np.sqrt(np.diff(R_ex)**2 + np.diff(Z_ex)**2))))
 
 diffrho = derm(rho, 'r')
+
+####################################################################################################################
+############################-------------------------- BISHOP'S TRICK--------------------------####################
+###################################################################################################################
+
 # Since we are calculating these coefficients in straight field line theta, we can use the fact that F[1]*jac[1]/R[1] = qfac[1]
 
 a_s = -(2*qfac[1]/F[1]*theta_st_new_ex + 2*F[1]*qfac[1]*ctrap(1/(R_ex**2*B_p_ex**2), theta_st_new_ex, initial=0))  
@@ -346,7 +333,7 @@ F_chk = np.array([np.abs(np.mean(qfac[i]*R[i]/jac[i])) for i in range(no_of_surf
 print("F_chk error(self_consistency_chk) = %.4E\n"%((F_chk[1]-F[1])*(a_N*B_N)))
 
 
-##### A bunch of basic sanity checks
+### A bunch of basic sanity checks
 test_diff_st = (dt_dR[1]*dpsidZ[1] - dt_dZ[1]*dpsidR[1])/np.sqrt(dpsidR[1]**2 + dpsidZ[1]**2)\
                 - 1/dermv(L_st, theta_st_new, 'l', 'o')[1]
 if np.max(np.abs(test_diff_st)) > 6E-5:
@@ -401,14 +388,10 @@ dt_dR_ex = nperiod_data_extend(dt_dR[1], nperiod, istheta = 0, par = 'o')
 dt_dZ_ex = nperiod_data_extend(dt_dZ[1], nperiod, istheta = 0, par = 'e')
 dpsidZ_ex = nperiod_data_extend(dpsidZ[1], nperiod, istheta=0, par = 'o')
 
-#dtdr_st_ex = nperiod_data_extend(dtdr_st[1], nperiod)
 dt_st_l_ex = nperiod_data_extend(dt_st_l[1], nperiod, istheta=0, par='e')
 dt_st_l_dl_ex = nperiod_data_extend(1/dermv(L_st, theta_st_new, 'l', par = 'o')[1], nperiod, istheta = 0, par = 'e')
 #dtdr_st_ex = (dt_dR_ex*dpsidR_ex + dt_dZ_ex*dpsidZ_ex)/dpsi_dr_ex 
 #pdb.set_trace()
-#aprime = (dqdr*theta_st_new_ex + np.reshape(qfac,(-1,1))*dtdr_st_ex)/drhodpsi
-
-#plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1],aprime[1])); plt.show()
 
 # gradpar = b.grad(theta) with st field line theta
 #gradpar_ex = -1/(R_ex*B_ex)*(dpsi_dr_ex)*(dt_st_l_ex/dl_ex) 
@@ -435,11 +418,9 @@ gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + \
 #plt.figure()
 gbdrift0 =  1/(B2_ex**2)*dpsidrho*F[1]/R_ex*(dqdr[1]*dB2l_ex/dl_ex)
 
-#plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gbdrift0[1]))
-#theta_eq_arc = eqarc_creator(gradpar, theta_st_new_ex)
-
-####################-------------------dBr calculation-----------------------------####################
-
+#############################################################################################################
+######################-----------------------dBr CALCULATION-------------------------########################
+#############################################################################################################
 #We use Miller's equations to find dBdr using the information given on the middle surface.
 # Miller and Bishop subscripts have been used interchangeably
 # dBdr_bish = (B_p**2/B*(1/R_c + dpdpsi*R/(B_p) + F*dFdpsi/dpsi_dr) + B_t**2/(R*B)*(np.sin(u_ML) - dFdpsi/F*R*dpsi_dr))
@@ -447,17 +428,15 @@ dBdr_bish = B_p_ex/B_ex*(-B_p_ex/R_c_ex + dpdpsi*R_ex - F[1]**2*np.sin(u_ML_ex)/
 #dBdr_bish_2 = B_p_ex/B_ex*(B_p_ex/R_c_ex + dpdpsi*R_ex - F[1]**2*np.sin(u_ML_ex)/(R_ex**3*B_p_ex))
 dBdr = dBdr_bish
 
-
 gbdrift = 1/np.abs(drhodpsi*B_ex**3)*(2*B2_ex*dBdr/dpsi_dr_ex + aprime_bish*drhodpsi*F[1]/R_ex*dB2l_ex/dl_ex*1/B_ex)
 #gbdrift = dpsidrho*(-2/B_ex*dBdr_bish/dpsi_dr_ex + 2*aprime*F/R_ex*1/B_ex**3*dBl_ex/dl_ex)
 
-#cvdrift =  1/np.abs(drhodpsi*B**3)*(2*B2*(dpdr/(2*B) + dBdr)/dpsi_dr + 1/jac*aprime_bish*drhodpsi*F/R*dB2l/dl*1/B)
 cvdrift = 1/np.abs(drhodpsi*B_ex**3)*(2*B_ex*dpdpsi) + gbdrift 
 
 
-###########################################################################################################
-####################---------------Equal-arc theta calculation-----------------------######################
-########################################################################################################### 
+####################################################################################################################
+#####################---------------------EQUAL_ARC THETA CALCULATION-------------------------######################
+#################################################################################################################### 
 #equal-arc theta calculation from straight field line gradpar
 gradpar_lim = gradpar_ex[theta_st_new_ex <= np.pi]
 B_lim = B_ex[theta_st_new_ex <= np.pi]
@@ -473,7 +452,6 @@ theta_eqarc = ctrap(B_lim/B_p_lim*gradpar_eqarc, L_eqarc, initial=0)
 theta_eqarc_new = np.linspace(0, np.pi, ntheta)
 theta_eqarc_ex = nperiod_data_extend(theta_eqarc, nperiod, istheta=1)
 theta_eqarc_new_ex = nperiod_data_extend(theta_eqarc_new, nperiod, istheta=1)
-
 
 gradpar_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gradpar_eqarc*np.ones((len(theta_eqarc_ex,))))
 R_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, R_ex)

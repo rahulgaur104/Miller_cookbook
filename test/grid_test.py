@@ -1,7 +1,19 @@
-"""
-python script to compare various eikcoefs with the FIGG output and also do a ball calculation using in the given theta coordinate(which may or may not be a flux coordinate)
+#!/usr/bin/env python3
+#python script to compare various eikcoefs with the GS2 output for the given set of theta_grid_knob variables
+#ntheta = 128
+#nperiod = 2
+#rhoc = 0.454
+#qinp = 0.961
+#shift = -0.060
+#s_hat_input = 0.164
+#R_geo = 0.7297266  # GS2 doesn't take Bunit so R_geo is taken from the local eikcoefs gen script
+#Rmaj =  3.24564035 #1.850/a_N
+#akappa = 1.398
+#akappri = 0.0102
+#tri_gs2 = -0.057
+#tripri_gs2 = 0.026
+#beta_prime_input = -0.1845 
 
-"""
 import pdb
 import os
 import sys
@@ -13,22 +25,18 @@ parnt_dir_name = os.path.dirname(os.getcwd())
 
 fname_in_txt = '{0}/{1}/{2}'.format(parnt_dir_name, 'test', 'grid.GS2_out_Miller_idx_42_nperiod_2_nl5_nt763')
 
-
 arr1 = np.loadtxt('./eik5.out', skiprows = 1)
 arr2 = np.loadtxt('./eik6.out', skiprows = 3)
 
 
 f = open(fname_in_txt, 'r')
-
 lines = f.readlines()
 
 nlambda = eval(lines[1].split()[0])
-
 lambda_arr = np.zeros((nlambda,))
 
 for i in range(nlambda):
     lambda_arr[i] = [eval(val) for val in lines[3+i].split()][0] 
-
 
 ntgrid, nperiod, ntheta, drhodpsi, rmaj, shat,  kxfac, q =  [eval(val) for val in lines[4+nlambda].split()]
 
@@ -41,7 +49,6 @@ tgrid = np.zeros((ntheta+1, ))
 
 for i in range(ntheta+1):
     gbdrift[i], gradpar[i], grho[i], tgrid[i] = [eval(val) for val in lines[6+nlambda+i].split()]   
-
 
 # read from eiktest output
 gbdrift2 = arr1[:, 4]
@@ -58,13 +65,11 @@ tgrid = np.zeros((ntheta+1, ))
 for i in range(ntheta+1):
     cvdrift[i], gds2[i], bmag[i], tgrid[i] = [eval(val) for val in lines[6+nlambda+ntheta+2+i].split()]   
 
-
 # read from the eiktest output
 cvdrift2 = arr1[:, 6]
 gds2_2 = arr1[:, 8]
 bmag2 = arr1[:, 2]
 tgrid2 = arr1[:, 0]
-
 
 # read from the python script
 gds21 = np.zeros((ntheta+1, ))
@@ -73,7 +78,6 @@ tgrid = np.zeros((ntheta+1, ))
 
 for i in range(ntheta+1):
     gds21[i], gds22[i], tgrid[i] = [eval(val) for val in lines[6+nlambda+2*(ntheta+2)+i].split()]   
-
 
 # read from the eiktest output
 gds21_2 = arr1[:, 9]
@@ -95,7 +99,7 @@ cvdrift0_2 = arr1[:, 7]
 gbdrift0_2 = arr1[:, 5]
 tgrid2 = tgrid2
 
-
+#Rplot and Zplot are wrong in GS2 for all versions <= 8.0.6. THe new version 8.1-RC fixes this problem.
 #Rplot = np.zeros((ntheta, ))
 #Rprime = np.zeros((ntheta, ))
 #tgrid = np.zeros((ntheta, ))
@@ -123,10 +127,6 @@ for i in range(ntheta+1):
 aplot2 = arr2[:, 3]
 aprime2 = arr2[:, 6]
 tgrid2 = arr2[:, 0]
-
-#pdb.set_trace()
-#plt.plot(tgrid, cvdrift,'-r', tgrid2, cvdrift2, '-g')
-
 
 fig, ((plt1, plt2, plt3, plt4), (plt5, plt6, plt7, plt8)) = plt.subplots(2,4)
 
@@ -211,14 +211,7 @@ plt.xticks(fontsize=14)
 plt.yticks(fontsize=14)
 plt8.legend(['GS2', 'local_eik'], fontsize=14)
 
-#plt2.legend(['1', '100'])
-#plt2.legend(['1', '100'])
-
-
 plt.show()
-
-
-
 
 pdb.set_trace()
 
