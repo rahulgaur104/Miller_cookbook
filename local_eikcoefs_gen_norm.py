@@ -38,7 +38,7 @@ want_collocation = 0
 fac = 0.5
 
 #If you want to see the lambda grid set lambda_knob = 1
-lambda_knob = 1
+lambda_knob = 0
 
 file_idx = 42 #random number to identify your output file
 
