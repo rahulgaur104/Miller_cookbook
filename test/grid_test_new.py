@@ -210,9 +210,10 @@ plt8.legend(['GS2', 'local_eik'], fontsize=14)
 
 fig.set_size_inches(16, 8, forward=True)
 fig.tight_layout()
-plt.show()
 plt.savefig('GS2-local-eikcoefs-comparison.png', dpi=300)
+print("png saved!")
 
+#plt.show()
 #pdb.set_trace()
 
 
