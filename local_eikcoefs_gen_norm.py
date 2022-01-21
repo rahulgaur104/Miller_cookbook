@@ -38,7 +38,7 @@ want_collocation = 0
 fac = 0.5
 
 #If you want to see the lambda grid set lambda_knob = 1
-lambda_knob = 0
+lambda_knob = 1
 
 file_idx = 42 #random number to identify your output file
 
@@ -410,12 +410,8 @@ dtdr_st_ex = (aprime_bish*drhodpsi - dqdr*theta_st_new_ex)/np.reshape(qfac, (-1,
 
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1],dtdr_st[1]))
 
-# old method for calculatings gds2
-#gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + \
-#        (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
-
-# more compact and intuitive
-gds2 = (psi_diff/diffrho)**2*(1/R_ex**2 + (qfac[1]/dt_st_l_dl_ex)**2 + (aprime_bish*drhodpsi)**2)
+gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + \
+        (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
 
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gds2[1]))
 
@@ -508,6 +504,8 @@ dict_file.close()
 # calling the script that does the saving
 os.system('python3 grid_save.py eikcoefs_dict.pkl')
 
+
+pdb.set_trace()
 
 
 
