@@ -10,7 +10,6 @@ import time
 import numpy as np
 import pickle
 #from matplotlib import pyplot as plt
-from scipy.integrate import cumtrapz as ctrap
 from scipy.interpolate import InterpolatedUnivariateSpline as linspl
 from scipy.interpolate import CubicSpline as cubspl
 from scipy.integrate import cumtrapz as ctrap
@@ -31,7 +30,6 @@ parnt_dir_nam = os.path.dirname(os.getcwd())
 want_eqarc = 1
 want_straight = 0
 want_collocation = 0
-
 
 # choose this factor(>0) to control the number of lambda points in the GS2 grid.out file
 # increasing fac decreases the number of lambda points
@@ -55,7 +53,7 @@ s_hat_input = 0.164
 Bunit = 17.49
 a = 0.570           # minor radius
 
-# IF BUNIT = 0, R_geo specifiec below will be used
+# IF BUNIT = 0, R_geo specified below will be used
 R_geo = 12345
 
 # Normalizing variables. Do not change
@@ -261,7 +259,7 @@ dZ_dpsi = derm(Z, 'r')/psi_diff
 #dZ_dt = derm(Z, 'l', 'o')/dt_st_l
 dZ_dt = dermv(Z, theta_st_new, 'l', 'o')
 
-jac = dR_dpsi*dZ_dt - dZ_dpsi*dR_dt
+jac     = dR_dpsi*dZ_dt - dZ_dpsi*dR_dt
 
 # partial derivatives of psi and theta_f on the cartesian grid
 dpsidR = dZ_dt/jac
@@ -291,17 +289,18 @@ R_c = dl/derm(phi_n, 'l', 'o')
 gradpar2 = 1/(B[1])*(B_p[1])*(derm(theta_st_new[1], 'l', 'o')/dl[1]) # gradpar is b.grad(theta)
 
 gradpar_geo = 1/(B[1])*(B_p[1])*(derm(theta_comn_mag_ax[1], 'l', 'o')/dl[1]) # gradpar is b.grad(theta)
-gradpar_geo_ex = nperiod_data_extend(gradpar_geo, nperiod, istheta=1)
+gradpar_geo_ex = nperiod_data_extend(gradpar_geo[0], nperiod, istheta=0)
 
 
-B_p_ex = nperiod_data_extend(np.abs(B_p[1]), nperiod, istheta = 0, par = 'e')
-B_ex = nperiod_data_extend(B[1], nperiod, istheta = 0, par = 'e')
-R_ex = nperiod_data_extend(R[1], nperiod, istheta = 0, par = 'e')
-Z_ex = nperiod_data_extend(Z[1], nperiod, istheta = 0, par = 'o')
-theta_col = spl1(theta_st_new[1])
-theta_col_ex = nperiod_data_extend(theta_col, nperiod, istheta=1)
-theta_st_new_ex = nperiod_data_extend(theta_st_new[1], nperiod, istheta=1)
+B_p_ex                   = nperiod_data_extend(np.abs(B_p[1]), nperiod, istheta = 0, par = 'e')
+B_ex                     = nperiod_data_extend(B[1], nperiod, istheta = 0, par = 'e')
+R_ex                     = nperiod_data_extend(R[1], nperiod, istheta = 0, par = 'e')
+Z_ex                     = nperiod_data_extend(Z[1], nperiod, istheta = 0, par = 'o')
+theta_col                = spl1(theta_st_new[1])
+theta_col_ex             = nperiod_data_extend(theta_col, nperiod, istheta=1)
+theta_st_new_ex          = nperiod_data_extend(theta_st_new[1], nperiod, istheta=1)
 theta_comn_mag_ax_new_ex = nperiod_data_extend(theta_comn_mag_ax_new[1], nperiod, istheta=1)
+
 
 u_ML_ex = nperiod_data_extend(u_ML[1], nperiod)
 R_c_ex = nperiod_data_extend(R_c[1], nperiod)
@@ -384,11 +383,11 @@ dqdr = diffq*dpsi_dr_ex/psi_diff
 dpdr = dpdpsi*dpsi_dr_ex
 
 dpsidR_ex = nperiod_data_extend(dpsidR[1], nperiod, istheta = 0, par = 'e')
-dt_dR_ex = nperiod_data_extend(dt_dR[1], nperiod, istheta = 0, par = 'o')
-dt_dZ_ex = nperiod_data_extend(dt_dZ[1], nperiod, istheta = 0, par = 'e')
+dt_dR_ex  = nperiod_data_extend(dt_dR[1], nperiod, istheta = 0, par = 'o')
+dt_dZ_ex  = nperiod_data_extend(dt_dZ[1], nperiod, istheta = 0, par = 'e')
 dpsidZ_ex = nperiod_data_extend(dpsidZ[1], nperiod, istheta=0, par = 'o')
 
-dt_st_l_ex = nperiod_data_extend(dt_st_l[1], nperiod, istheta=0, par='e')
+dt_st_l_ex    = nperiod_data_extend(dt_st_l[1], nperiod, istheta=0, par='e')
 dt_st_l_dl_ex = nperiod_data_extend(1/dermv(L_st, theta_st_new, 'l', par = 'o')[1], nperiod, istheta = 0, par = 'e')
 #dtdr_st_ex = (dt_dR_ex*dpsidR_ex + dt_dZ_ex*dpsidZ_ex)/dpsi_dr_ex 
 #pdb.set_trace()
@@ -411,11 +410,11 @@ dtdr_st_ex = (aprime_bish*drhodpsi - dqdr*theta_st_new_ex)/np.reshape(qfac, (-1,
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1],dtdr_st[1]))
 
 # old method for calculatings gds2
-#gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + \
-#        (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
+gds2 =  (psi_diff/diffrho)**2*(1/R_ex**2 + (dqdr*theta_st_new_ex)**2 + \
+        (np.reshape(qfac,(-1,1)))**2*(dtdr_st_ex**2 + (dt_st_l_dl_ex)**2)+ 2*np.reshape(qfac,(-1,1))*dqdr*theta_st_new_ex*dtdr_st_ex)
 
 # more compact and intuitive
-gds2 = (psi_diff/diffrho)**2*(1/R_ex**2 + (qfac[1]/dt_st_l_dl_ex)**2 + (aprime_bish*drhodpsi)**2)
+#gds2 = (psi_diff/diffrho)**2*(1/R_ex**2 + (qfac[1]/dt_st_l_dl_ex)**2 + (aprime_bish*drhodpsi)**2)
 
 #plt.plot(theta, np.interp(theta_comn_mag_ax[1], theta_comn_mag_ax_new[1], gds2[1]))
 
@@ -457,47 +456,56 @@ theta_eqarc_new = np.linspace(0, np.pi, ntheta)
 theta_eqarc_ex = nperiod_data_extend(theta_eqarc, nperiod, istheta=1)
 theta_eqarc_new_ex = nperiod_data_extend(theta_eqarc_new, nperiod, istheta=1)
 
-gradpar_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gradpar_eqarc*np.ones((len(theta_eqarc_ex,))))
+gradpar_eqarc_new_ex = np.mean(gradpar_eqarc)*np.ones((len(theta_eqarc_ex,)))
 R_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, R_ex)
+Z_eqarc_new_ex  = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, Z_ex)
 gds21_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gds21[1])
 gds22_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gds22[1])
 gds2_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gds2[1])
 grho_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, grho)
 gbdrift0_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gbdrift0)
 B_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, B_ex)
+B_p_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, B_p_ex)
 cvdrift_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, cvdrift)
 gbdrift_eqarc_new_ex = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, gbdrift)
+
+aprime_eqarc_new_ex  = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, aprime_bish)
+alpha_eqarc_new_ex  = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, alpha[1])
+#jac_eqarc_new_ex  = np.interp(theta_eqarc_new_ex, theta_eqarc_ex, jac_ex)
 
 ###########################################################################################################
 ################---------------PACKING EIKCOEFS INTO A DICTIONARY------------------########################
 ##########################################################################################################
 
-#pdb.set_trace()
 if want_eqarc == 1:
     eikcoefs_dict = {'theta_ex':theta_eqarc_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_eqarc_new_ex, 'R_ex':R_eqarc_new_ex,\
                     'B_ex':B_eqarc_new_ex, 'gds21_ex':gds21_eqarc_new_ex, 'gds22_ex':gds22_eqarc_new_ex, 'gds2_ex':gds2_eqarc_new_ex,\
                     'grho_ex':grho_eqarc_new_ex, 'gbdrift_ex':gbdrift_eqarc_new_ex, 'cvdrift_ex':cvdrift_eqarc_new_ex,\
                     'gbdrift0_ex':gbdrift0_eqarc_new_ex, 'cvdrift0_ex':gbdrift0_eqarc_new_ex, 'qfac':qfac[1], 'shat':s_hat_input,\
-                    'dpsidrho':dpsidrho, 'Z_ex': Z_ex, 'aplot':alpha, 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,\
-                    'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
+                    'dpsidrho':dpsidrho, 'Z_ex': Z_eqarc_new_ex, 'aplot':alpha_eqarc_new_ex, 'jacob':-dpsidrho/(B_eqarc_new_ex*gradpar_eqarc),\
+                    'aprime':aprime_eqarc_new_ex, 'fac':fac, 'file_idx':file_idx, 'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
 
 elif want_straight == 1:
     eikcoefs_dict = {'theta_ex':theta_st_new_ex,  'nperiod':nperiod,'gradpar_ex':gradpar_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
-                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
-                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
+                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha[1],\
+                     'jacob':-dpsidrho/(B_ex*gradpar_ex), 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob,\
+                     'u_ML':u_ML_ex}
 
 elif want_collocation == 1:
     eikcoefs_dict = {'theta_ex':theta_col_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_col_ex, 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
                     'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0,\
-                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha,\
-                    'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
+                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha[1],\
+                     'jacob':-dpsidrho/(B_ex*gradpar_col_ex), 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx,'lambda_knob':lambda_knob,\
+                     'u_ML':u_ML_ex}
 
 else:# theta geometric
-    eikcoefs_dict = {'theta_ex':theta_comn_mag_ax_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_geo_ex[0], 'R_ex':R_ex, 'B_ex':B_ex, 'gds21_ex':gds21[1],\
-                    'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, 'gbdrift0_ex':gbdrift0, \
-                    'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, 'aplot':alpha, 'aprime':aprime_bish,\
-                    'fac':fac, 'file_idx':file_idx, 'lambda_knob':lambda_knob,'u_ML':u_ML_ex}
+    pdb.set_trace()
+    eikcoefs_dict = {'theta_ex':theta_comn_mag_ax_new_ex, 'nperiod':nperiod, 'gradpar_ex':gradpar_geo_ex, 'R_ex':R_ex, 'B_ex':B_ex, \
+                    'gds21_ex':gds21[1], 'gds22_ex':gds22[1], 'gds2_ex':gds2[1], 'grho_ex':grho, 'gbdrift_ex':gbdrift, 'cvdrift_ex':cvdrift, \
+                    'gbdrift0_ex':gbdrift0, 'cvdrift0_ex':gbdrift0, 'qfac':qfac[1], 'shat':s_hat_input, 'dpsidrho':dpsidrho,'Z_ex':Z_ex, \
+                    'aplot':alpha[1], 'jacob':-dpsidrho/(B_ex*gradpar_geo_ex), 'aprime':aprime_bish, 'fac':fac, 'file_idx':file_idx, \
+                    'lambda_knob':lambda_knob, 'u_ML':u_ML_ex}
 
 
 dict_file = open('eikcoefs_dict.pkl', 'wb')

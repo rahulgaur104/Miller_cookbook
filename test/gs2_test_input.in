@@ -18,10 +18,12 @@
 
 &theta_grid_eik_knobs
 
+ bishop = 4
  beta_prime_input = -0.1845
  s_hat_input = 0.164
- bishop = 4
- 
+
+ equal_arc = .true.
+
  irho = 2
  iflux = 0
  local_eq =.true.
