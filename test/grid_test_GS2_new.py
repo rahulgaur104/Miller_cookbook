@@ -24,7 +24,7 @@ from matplotlib import pyplot as plt
 
 parnt_dir_name = os.path.dirname(os.getcwd())
 
-fname_in_txt = '{0}/{1}/{2}'.format(parnt_dir_name, 'output_grid_files', 'gx_out_42_nperiod_2_nt763.nc')
+fname_in_txt = '{0}/{1}/{2}'.format(parnt_dir_name, 'output_grid_files', 'gx_out_42_nperiod_2_nt762.nc')
 
 fname_in_txt2 = '{0}/{1}/{2}'.format(parnt_dir_name, 'test', 'gs2_test_input.out.nc') 
 
@@ -150,9 +150,11 @@ plt.yticks(fontsize=14)
 plt6.legend(['GS2', 'local_eik'], fontsize=14)
 
 
-plt8.plot(tgrid, aprime, '-r', tgrid2, aprime2, '-g')
+#plt8.plot(tgrid, aprime, '-r', tgrid2, aprime2, '-g')
+plt8.plot(tgrid, cvdrift0, '-r', tgrid2, cvdrift0_2, '-g')
 plt8.set_xlabel('theta_equal_arc', fontsize=16)
-plt8.set_ylabel('aprime', fontsize=16)
+#plt8.set_ylabel('aprime', fontsize=16)
+plt8.set_ylabel('gbdrift0', fontsize=16)
 #plt2.text(0.9, 0.2, 'scale=%.3f'%(np.max(bmag)/np.max(bmag2)))
 #plt2.set_title('rho=0.25', fontsize=16)
 plt.xticks(fontsize=14)

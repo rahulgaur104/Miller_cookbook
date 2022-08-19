@@ -76,27 +76,27 @@ ntheta   = len(theta_ball)
 # creating equispaced equal-arc data
 ntheta2       = ntheta - 1
 theta_ball2   = np.delete(theta_ball, int(ntheta)-1)
-gradpar_sav   = np.interp(theta_ball2, theta_ball,  gradpar_ball)
-bmag_sav      = np.interp(theta_ball2, theta_ball,  B_ball)
-jacob_sav     = np.interp(theta_ball2, theta_ball,  jacob_ball)
-grho_sav      = np.interp(theta_ball2, theta_ball,  grho_ball)
-gbdrift_sav   = np.interp(theta_ball2, theta_ball,  gbdrift_ball)
-gbdrift0_sav  = np.interp(theta_ball2, theta_ball,  gbdrift0_ball)
-cvdrift_sav   = np.interp(theta_ball2, theta_ball,  cvdrift_ball)
-gds21_sav     = np.interp(theta_ball2, theta_ball,  gds21_ball)
-gds2_sav      = np.interp(theta_ball2, theta_ball,  gds2_ball)
-gds22_sav     = np.interp(theta_ball2, theta_ball,  gds22_ball)
+#gradpar_sav   = np.interp(theta_ball2, theta_ball,  gradpar_ball)
+#bmag_sav      = np.interp(theta_ball2, theta_ball,  B_ball)
+#jacob_sav     = np.interp(theta_ball2, theta_ball,  jacob_ball)
+#grho_sav      = np.interp(theta_ball2, theta_ball,  grho_ball)
+#gbdrift_sav   = np.interp(theta_ball2, theta_ball,  gbdrift_ball)
+#gbdrift0_sav  = np.interp(theta_ball2, theta_ball,  gbdrift0_ball)
+#cvdrift_sav   = np.interp(theta_ball2, theta_ball,  cvdrift_ball)
+#gds21_sav     = np.interp(theta_ball2, theta_ball,  gds21_ball)
+#gds2_sav      = np.interp(theta_ball2, theta_ball,  gds2_ball)
+#gds22_sav     = np.interp(theta_ball2, theta_ball,  gds22_ball)
+#
+#
+#Rplot_sav     = np.interp(theta_ball2, theta_ball,  Rplot_ball)
+#Zplot_sav     = np.interp(theta_ball2, theta_ball,  Zplot_ball)
+#aplot_sav     = np.interp(theta_ball2, theta_ball,  aplot_ball)
+#Rprime_sav    = np.interp(theta_ball2, theta_ball,  Rprime_ball)
+#Zprime_sav    = np.interp(theta_ball2, theta_ball,  Zprime_ball)
+#aprime_sav    = np.interp(theta_ball2, theta_ball,  aprime_ball)
 
 
-Rplot_sav     = np.interp(theta_ball2, theta_ball,  Rplot_ball)
-Zplot_sav     = np.interp(theta_ball2, theta_ball,  Zplot_ball)
-aplot_sav     = np.interp(theta_ball2, theta_ball,  aplot_ball)
-Rprime_sav    = np.interp(theta_ball2, theta_ball,  Rprime_ball)
-Zprime_sav    = np.interp(theta_ball2, theta_ball,  Zprime_ball)
-aprime_sav    = np.interp(theta_ball2, theta_ball,  aprime_ball)
-
-
-fn = "./output_grid_files/gx_out_%d_nperiod_%d_nt%d.nc"%(int(file_idx), nperiod, ntheta2)
+fn = "./output_grid_files/gx_out_%d_nperiod_%d_nt%d.nc.out"%(int(file_idx), nperiod, ntheta2)
 
 ds = nc.Dataset(fn, 'w')
 
@@ -133,26 +133,49 @@ q           = ds.createVariable('q', 'f8', )
 shat        = ds.createVariable('shat', 'f8', )
 
 
-theta_nc[:]    = theta_ball2
-bmag_nc[:]     = bmag_sav
-gradpar_nc[:]  = gradpar_sav
-grho_nc[:]     = grho_sav
-gds2_nc[:]     = gds2_sav
-gds21_nc[:]    = gds21_sav
-gds22_nc[:]    = gds22_sav
-gbdrift_nc[:]  = gbdrift_sav
-gbdrift0_nc[:] = gbdrift0_sav
-cvdrift_nc[:]  = cvdrift_sav
-cvdrift0_nc[:] = gbdrift0_sav
-jacob_nc[:]    = jacob_sav
+theta_nc[:]    = theta_ball[:-1]
+bmag_nc[:]     = B_ball[:-1]
+gradpar_nc[:]  = gradpar_ball[:-1]
+grho_nc[:]     = grho_ball[:-1]
+gds2_nc[:]     = gds2_ball[:-1]
+gds21_nc[:]    = gds21_ball[:-1]
+gds22_nc[:]    = gds22_ball[:-1]
+gbdrift_nc[:]  = gbdrift_ball[:-1]
+gbdrift0_nc[:] = gbdrift0_ball[:-1]
+cvdrift_nc[:]  = cvdrift_ball[:-1]
+cvdrift0_nc[:] = gbdrift0_ball[:-1]
+jacob_nc[:]    = jacob_ball[:-1]
 
-Rplot_nc[:]    = Rplot_sav
-Zplot_nc[:]    = Zplot_sav
-aplot_nc[:]    = aplot_sav
+Rplot_nc[:]    = Rplot_ball[:-1]
+Zplot_nc[:]    = Zplot_ball[:-1]
+aplot_nc[:]    = aplot_ball[:-1]
 
-Rprime_nc[:]   = Rprime_sav
-Zprime_nc[:]   = Zprime_sav
-aprime_nc[:]   = aprime_sav
+Rprime_nc[:]   = Rprime_ball[:-1]
+Zprime_nc[:]   = Zprime_ball[:-1]
+aprime_nc[:]   = aprime_ball[:-1]
+
+
+#theta_nc[:]    = theta_ball2[:]
+#bmag_nc[:]     = bmag_sav[:]
+#gradpar_nc[:]  = gradpar_sav[:]
+#grho_nc[:]     = grho_sav[:]
+#gds2_nc[:]     = gds2_sav[:]
+#gds21_nc[:]    = gds21_sav[:]
+#gds22_nc[:]    = gds22_sav[:]
+#gbdrift_nc[:]  = gbdrift_sav[:]
+#gbdrift0_nc[:] = gbdrift0_sav[:]
+#cvdrift_nc[:]  = cvdrift_sav[:]
+#cvdrift0_nc[:] = gbdrift0_sav[:]
+#jacob_nc[:]    = jacob_sav[:]
+#
+#Rplot_nc[:]    = Rplot_sav[:]
+#Zplot_nc[:]    = Zplot_sav[:]
+#aplot_nc[:]    = aplot_sav[:]
+#
+#Rprime_nc[:]   = Rprime_sav[:]
+#Zprime_nc[:]   = Zprime_sav[:]
+#aprime_nc[:]   = aprime_sav[:]
+
 
 drhodpsi_nc[0] = 1/dpsidrho
 kxfac_nc[0]    = 1.
